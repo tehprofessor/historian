@@ -1,0 +1,11 @@
+%{
+  "asciichart": {:hex, :asciichart, "1.0.0", "6ef5dbeab545cb7a0bdce7235958f129de6cd8ad193684dc0953c9a8b4c3db5b", [:mix], [], "hexpm"},
+  "colorized_inspect": {:hex, :colorized_inspect, "1.1.0", "1a78a2041384a95401432e8e500533a8d4a7af08ef1afe0205c1e680053b1142", [:mix], [], "hexpm"},
+  "elixir_make": {:hex, :elixir_make, "0.6.0", "38349f3e29aff4864352084fc736fa7fa0f2995a819a737554f7ebd28b85aaab", [:mix], [], "hexpm"},
+  "ex_termbox": {:hex, :ex_termbox, "1.0.0", "6f26a0cdc787c0685732649beee6973248504fc689776cf57a485422be8dac4b", [:make, :mix], [{:elixir_make, "~> 0.4", [hex: :elixir_make, repo: "hexpm", optional: false]}], "hexpm"},
+  "gettext": {:hex, :gettext, "0.17.4", "f13088e1ec10ce01665cf25f5ff779e7df3f2dc71b37084976cf89d1aa124d5c", [:mix], [], "hexpm"},
+  "nimble_parsec": {:hex, :nimble_parsec, "0.5.3", "def21c10a9ed70ce22754fdeea0810dafd53c2db3219a0cd54cf5526377af1c6", [:mix], [], "hexpm"},
+  "pane": {:hex, :pane, "0.3.0", "7b028e2aa8f004b62a965de983d824ad20d94f3c9c82b2bb4a9cdcebeb9e7060", [:mix], [], "hexpm"},
+  "ratatouille": {:hex, :ratatouille, "0.5.0", "e843c2dbc0293438865361c4e4fecf5bab702563e490d67dee85edcabf15ac1d", [:mix], [{:asciichart, "~> 1.0", [hex: :asciichart, repo: "hexpm", optional: false]}, {:ex_termbox, "~> 1.0", [hex: :ex_termbox, repo: "hexpm", optional: false]}], "hexpm"},
+  "scribe": {:hex, :scribe, "0.10.0", "90e61b21fee884f58b955d1f45d7fa3e75f161ecb62bad8af6087aef3955c74f", [:mix], [{:pane, "~> 0.2", [hex: :pane, repo: "hexpm", optional: false]}], "hexpm"},
+}

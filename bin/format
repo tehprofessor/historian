@@ -1,0 +1,1 @@
+PATH=$ASDF_DIR/shims:$ASDF_DIR/bin:$PATH mix format $*
