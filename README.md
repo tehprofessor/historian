@@ -40,10 +40,14 @@ Or alternatively specifying the page size and offset:
 iex> lines = 100
 iex> offset = 100
 # Default is 100 lines, with an offset of 0 (the most recent)
-iex> Historian.view_history()
+iex> Historian.view_history(lines, offset)
 ```
 
 [add screenshot]
+
+#### Exiting Historian `[ctrl+d]`
+
+To leave the historian interface and return to your `iex` prompt just press `ctrl+d` at anytime in the historian UI.
 
 #### Navigating Pages `[j]` / `[k]`
 
