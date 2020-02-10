@@ -15,7 +15,10 @@ defmodule Historian.TUi.HistoryView do
   @txt_selected_line "SELECTED LINE!"
   @txt_viewing_history "VIEWING HISTORY"
 
-  def render(%{data: %{items: items, cursor: %{size: max_length} = cursor, selected_lines: selected_ids}, last_event: event}) do
+  def render(%{
+        data: %{items: items, cursor: %{size: max_length} = cursor, selected_lines: selected_ids},
+        last_event: event
+      }) do
     selected = Cursor.position(cursor)
 
     {:ok, window_height} = Ratatouille.Window.fetch(:height)
@@ -56,6 +59,7 @@ defmodule Historian.TUi.HistoryView do
 
   defp do_history_status_bar(action_text, status_text) do
     navigation_items = history_view_navigation_items(@status_bar_color, @status_bar_bg)
+
     status_bar_items =
       case maybe_history_status_text(status_text, @status_bar_color, @status_bar_bg) do
         nil -> navigation_items

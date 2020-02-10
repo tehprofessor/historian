@@ -1,9 +1,20 @@
 # Historian
 
+```text
+██╗  ██╗██╗███████╗████████╗ ██████╗ ██████╗ ██╗ █████╗ ███╗   ██╗
+██║  ██║██║██╔════╝╚══██╔══╝██╔═══██╗██╔══██╗██║██╔══██╗████╗  ██║
+███████║██║███████╗   ██║   ██║   ██║██████╔╝██║███████║██╔██╗ ██║
+██╔══██║██║╚════██║   ██║   ██║   ██║██╔══██╗██║██╔══██║██║╚██╗██║
+██║  ██║██║███████║   ██║   ╚██████╔╝██║  ██║██║██║  ██║██║ ╚████║
+╚═╝  ╚═╝╚═╝╚══════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝
+
+
 An interactive history manager and snippet archival tool for IEx.
+```
 
 _Notes:_
 
+**Feb. 09, 2020** -- Welcome Screen added though setup isn't firing because it's not wired up yet (I just realized as I'm writing this...) Added some tests. Still need to clean up code and add gifs once setup is being called, but pretty close.
 **Feb. 08, 2020** -- Initial commit, a couple things missing (making setup easier, add archive entries through terminal UI, some commands need to be updated, add gifs here, and... I should add tests -_-;). I should have that finished by tomorrow afternoon.
 
 ### Setup

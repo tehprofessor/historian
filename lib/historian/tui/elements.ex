@@ -1,4 +1,5 @@
 defmodule Historian.TUi.Elements do
+  import Historian.Gettext
   import Ratatouille.View
 
   def column_panel(size, title, color, bg, offset_y, items, display_item_fn) do
@@ -15,7 +16,8 @@ defmodule Historian.TUi.Elements do
     history_item(event, line_id, content, current_selection_id)
   end
 
-  def history_item(event, line_id, content, current_selection_id, selected_ids) when is_list(selected_ids) do
+  def history_item(event, line_id, content, current_selection_id, selected_ids)
+      when is_list(selected_ids) do
     if Enum.member?(selected_ids, line_id) do
       label(content: "#{content}", color: :blue, attributes: [:bold])
     else
@@ -43,21 +45,35 @@ defmodule Historian.TUi.Elements do
     column_panel(11, "Value", color, bg, offset_y, items, display_item_fn)
   end
 
+  @txt_history_buffer "History Buffer"
+  @txt_archives "Archives"
   def menu_bar(_selected_view) do
     {:ok, window_width} = Ratatouille.Window.fetch(:width)
     # This is too much padding, but I honestly can't tell if makes any difference.
-    magic_number = String.length("Historian  [1 History Buffer] -- [2 Archives]")
+    history_text = gettext(@txt_history_buffer)
+    archives_text = gettext(@txt_archives)
+    magic_number = String.length("Historian  [1 #{history_text}] -- [2 #{archives_text}]")
     bar_padding = String.pad_trailing(" ", window_width - magic_number)
 
     color = :black
     bg_color = :cyan
 
+    menu_bar_items = [
+      text(content: "  Historian", background: bg_color, color: color, attributes: [:bold])
+    ]
 
-    menu_bar_items = [text(content: "  Historian", background: bg_color, color: color, attributes: [:bold])]
-    menu_bar_items = [navigation_option("History Buffer", 1, color, bg_color) | menu_bar_items]
-    menu_bar_items = [text(content: " --", background: :cyan, color: :black, attributes: []) | menu_bar_items]
-    menu_bar_items = [navigation_option("Archives", 2, color, bg_color) | menu_bar_items]
-    menu_bar_items = [text(content: bar_padding, background: :cyan, color: :black, attributes: []) | menu_bar_items]
+    menu_bar_items = [navigation_option(history_text, 1, color, bg_color) | menu_bar_items]
+
+    menu_bar_items = [
+      text(content: " --", background: :cyan, color: :black, attributes: []) | menu_bar_items
+    ]
+
+    menu_bar_items = [navigation_option(archives_text, 2, color, bg_color) | menu_bar_items]
+
+    menu_bar_items = [
+      text(content: bar_padding, background: :cyan, color: :black, attributes: [])
+      | menu_bar_items
+    ]
 
     bar do
       label do
@@ -67,26 +83,35 @@ defmodule Historian.TUi.Elements do
   end
 
   def navigation_item(:copy_line, color, bg) do
-    navigation_option("copy lines", "y", color, bg)
+    navigation_option(gettext("copy lines"), "y", color, bg)
   end
 
   def navigation_item(:select_line, color, bg) do
-    navigation_option("select lines", "space", color, bg)
+    navigation_option(gettext("select lines"), "space", color, bg)
+  end
+
+  def navigation_item(:scroll_up, color, bg) do
+    navigation_option(gettext("scroll up"), "k", color, bg)
+  end
+
+  def navigation_item(:scroll_down, color, bg) do
+    navigation_option(gettext("scroll down"), "j", color, bg)
   end
 
   def navigation_item(:move_up, color, bg) do
-    navigation_option("move up", "k", color, bg)
+    navigation_option(gettext("move up"), "k", color, bg)
   end
 
   def navigation_item(:move_down, color, bg) do
-    navigation_option("move down", "j", color, bg)
+    navigation_option(gettext("move down"), "j", color, bg)
   end
 
   def navigation_item(:quit, color, bg) do
-    navigation_option("quit historian", "ctrl+d", color, bg)
+    navigation_option(gettext("quit historian"), "ctrl+d", color, bg)
   end
 
-  def navigation_option(name, selected_binding, color, bg, selected_binding) when is_integer(selected_binding) do
+  def navigation_option(name, selected_binding, color, bg, selected_binding)
+      when is_integer(selected_binding) do
     [
       text(content: " [", color: color, background: bg),
       text(content: "#{selected_binding}", color: color, background: bg, attributes: [:bold]),

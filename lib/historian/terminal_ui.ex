@@ -7,13 +7,6 @@ defmodule Historian.TerminalUI do
 
   @enter key(:enter)
 
-  @escape key(:esc)
-
-  @arrow_up    key(:arrow_up)
-  @arrow_down  key(:arrow_down)
-  @arrow_left  key(:arrow_left)
-  @arrow_right key(:arrow_right)
-
   @delete_keys [
     key(:delete),
     key(:backspace),
@@ -56,7 +49,7 @@ defmodule Historian.TerminalUI do
         cursor: Cursor.new(:edit_cursor, size),
         element_cursor: Cursor.new(:element_cursor, element_size),
         object: source,
-        source: source,
+        source: source
       }
     end
   end
@@ -129,15 +122,39 @@ defmodule Historian.TerminalUI do
     end
   end
 
-  def init(_) do
-    history = Historian.Buffer.first()
-    view_data = HistoryViewModel.new(history.items)
+  def init(%{start_screen: :welcome}) do
+  end
 
-    %__MODULE__{history: history, cursor: 0, screen: :view_history, data: view_data}
+  def init(_) do
+    case Historian.UserInterfaceServer.start_screen() do
+      :view_history ->
+        history = Historian.Buffer.first()
+        view_data = HistoryViewModel.new(history.items)
+        %__MODULE__{history: history, cursor: 0, screen: :view_history, data: view_data}
+
+      _ ->
+        {:ok, window_height} = Ratatouille.Window.fetch(:height)
+
+        %__MODULE__{
+          history: nil,
+          cursor: Cursor.new(:welcome, max(44 - window_height, 0)),
+          screen: :welcome,
+          data: %{}
+        }
+    end
   end
 
   def update(%{screen: :search} = state, {:event, %{key: @enter}}) do
     %{state | last_event: :select_search}
+  end
+
+  def update(%{screen: :welcome} = state, msg) do
+    case msg do
+      {:event, %{ch: ?j}} -> Cursor.down!(state)
+      {:event, %{ch: ?k}} -> Cursor.up!(state)
+      {:event, %{ch: ?y}} -> %{state | last_event: :install}
+      _ -> %{state | last_event: nil}
+    end
   end
 
   def update(%{screen: :search, last_event: :copied_line} = state, _msg) do
@@ -174,7 +191,10 @@ defmodule Historian.TerminalUI do
     %{state | screen: :search, data: SearchViewModel.new(history, "")}
   end
 
-  def update(%{screen: screen, history: %{items: items}, last_event: nil} = state, {:event, %{ch: ?1}})
+  def update(
+        %{screen: screen, history: %{items: items}, last_event: nil} = state,
+        {:event, %{ch: ?1}}
+      )
       when screen not in [:view_history, :search] do
     %{state | screen: :view_history, data: HistoryViewModel.new(items), last_event: nil}
   end
@@ -190,7 +210,7 @@ defmodule Historian.TerminalUI do
       {:editing_entry_save, _} = save_event -> update(%{state | last_event: save_event}, msg)
       {event, updated_item} -> %{state | last_event: {event, updated_item}}
     end
- end
+  end
 
   def update(%{screen: :archive, last_event: {:editing_entry_save, %{name: name}}} = state, _msg) do
     archive_data = Historian.Archive.all()
@@ -238,6 +258,10 @@ defmodule Historian.TerminalUI do
       end
 
     %{state | data: updated_model, last_event: event}
+  end
+
+  def render(%{screen: :welcome} = model) do
+    Historian.TUi.Welcome.render(model)
   end
 
   def render(%{screen: :view_history} = model) do

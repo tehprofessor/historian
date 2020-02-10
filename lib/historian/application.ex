@@ -6,38 +6,56 @@ defmodule Historian.Application do
   alias Historian.Config
 
   @history_table :history_table
-  @entry_table :entry_table
   @archive_table :historian_archive_db
 
   def start(_type, _args) do
-    config_path = Config.config_path()
-    archive_filename = Config.archive_filename()
     history_server_name = Config.history_server_name()
-    entry_server_name = Config.entry_server_name()
+    first_screen = get_first_screen!()
 
     children = [
       # Create a process to interact with the current history
       server_spec(history_server_name, @history_table, nil, false),
-      archive_spec(@archive_table, config_path, archive_filename, true),
+      archive_spec(@archive_table),
+      ui_server(first_screen),
       # Create a process for the history buffer
-      buffer_spec(),
+      buffer_spec()
     ]
 
     opts = [strategy: :one_for_one, name: Historian.Supervisor]
     Supervisor.start_link(children, opts)
   end
 
-  defp server_spec(server_name, table_name, file_path, persisted) do
+  defp get_first_screen! do
+    if Config.persist_archive?() do
+      archive_path = Config.archive_path()
+
+      if File.exists?(archive_path) do
+        Config.setup(:complete)
+      end
+    end
+
+    Config.first_screen()
+  end
+
+  defp ui_server(screen) do
     %{
-      id: server_name,
-      start: {Historian.Server, :start_link, [server_name, {table_name, file_path, persisted}, []]}
+      id: Historian.UserInterfaceServer,
+      start: {Historian.UserInterfaceServer, :start_link, [screen, []]}
     }
   end
 
-  defp archive_spec(table_name, config_path, archive_filename, persisted) do
+  defp server_spec(server_name, table_name, file_path, persisted) do
+    %{
+      id: server_name,
+      start:
+        {Historian.Server, :start_link, [server_name, {table_name, file_path, persisted}, []]}
+    }
+  end
+
+  defp archive_spec(table_name) do
     %{
       id: Historian.Archive,
-      start: {Historian.Archive, :start_link, [{table_name, config_path, archive_filename, persisted}, []]}
+      start: {Historian.Archive, :start_link, [table_name, []]}
     }
   end
 

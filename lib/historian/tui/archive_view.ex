@@ -9,8 +9,6 @@ defmodule Historian.TUi.ArchiveView do
   @status_bar_color :black
   @status_bar_bg :green
 
-  @events [:copied_line, :copied_lines, :editing_entry]
-
   @txt_archive_col_name "Name"
   @txt_archive_col_value "Value"
 
@@ -101,6 +99,7 @@ defmodule Historian.TUi.ArchiveView do
 
   defp archive_status_bar(_default, archive_size) do
     subtext = gettext(@txt_total_entries) <> " " <> "#{to_string(archive_size)}"
+
     do_archive_status_bar(
       nil,
       gettext(@txt_viewing_archive),

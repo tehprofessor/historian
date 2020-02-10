@@ -1,10 +1,11 @@
 defmodule Historian.TUi.ModalView do
-  @moduledoc false
+  @moduledoc """
+  Creates modal or overlay views (primarily used by the archiving system)
+  """
 
   alias Historian.TerminalUI.Cursor
 
   import Historian.Gettext
-  import Historian.TUi.Elements
   import Ratatouille.View
 
   @background_color :white
@@ -51,7 +52,14 @@ defmodule Historian.TUi.ModalView do
   end
 
   def edit_dialog_box(heading, content, rows, cursor, element_cursor) do
-    dialog_box(gettext(@txt_editing_entry), heading, gettext(@txt_save), gettext(@txt_cancel), 15, element_cursor) do
+    dialog_box(
+      gettext(@txt_editing_entry),
+      heading,
+      gettext(@txt_save),
+      gettext(@txt_cancel),
+      15,
+      element_cursor
+    ) do
       do_edit_dialog_box(content, rows, cursor, element_cursor)
     end
   end

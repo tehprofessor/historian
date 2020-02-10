@@ -3,14 +3,14 @@ defmodule Historian.History do
   A data structure for managing histories.
   """
 
-  defstruct [name: nil, items: [], __meta__: %{}]
+  defstruct name: nil, items: [], __meta__: %{}
 
   @type t(item) :: %__MODULE__{name: atom(), items: list(item), __meta__: map()}
 
   defmodule Item do
     @moduledoc "A data structure and functions for history items."
 
-    defstruct [id: nil, value: nil, __meta__: %{}]
+    defstruct id: nil, value: nil, __meta__: %{}
 
     @type t :: %__MODULE__{id: non_neg_integer(), value: String.t(), __meta__: map()}
   end

@@ -4,15 +4,21 @@ defmodule Historian.MixProject do
   def project do
     [
       app: :historian,
-      version: "0.1.0",
+      version: "0.11.1",
       elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
       compilers: [:gettext] ++ Mix.compilers(),
-      deps: deps()
+      source_url: "https://github.com/tehprofessor/historian",
+      deps: deps(),
+      docs: [
+        main: "README",
+        extras: [
+          "README.md",
+        ],
+      ],
     ]
   end
 
-  # Run "mix help compile.app" to learn about applications.
   def application do
     [
       extra_applications: [:logger],
@@ -25,9 +31,9 @@ defmodule Historian.MixProject do
     ]
   end
 
-  # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:gettext, "~> 0.17"},
       {:ratatouille, "~> 0.5"},
       {:scribe, "~> 0.10"}

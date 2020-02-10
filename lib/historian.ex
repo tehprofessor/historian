@@ -5,7 +5,6 @@ defmodule Historian do
 
   alias Historian.{Buffer, Config, History, Server}
 
-  @ets_path '.historian-ets-table'
   @last_read_key :last_read
 
   def print_lines(:last_result) do
@@ -131,8 +130,9 @@ defmodule Historian do
       :cyan,
       name,
       :reset,
-      "\n\n",
-    ]) |> IO.puts()
+      "\n\n"
+    ])
+    |> IO.puts()
 
     Scribe.print(output, data: [{"id", :id}, {"value", :value}], colorize: false)
   end

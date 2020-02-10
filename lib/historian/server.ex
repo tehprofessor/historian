@@ -34,7 +34,9 @@ defmodule Historian.Server do
 
   # FIXME/TODO: This does not work like I thought it would
   def terminate(_reason, state) do
-    _ = :ets.tab2file(state.table, '.historian-entries') |> IO.inspect(label: "historian entries persisted to file: .historian-entries")
+    _ =
+      :ets.tab2file(state.table, '.historian-entries')
+      |> IO.inspect(label: "historian entries persisted to file: .historian-entries")
   end
 
   def handle_cast({:write, key, value}, state) do

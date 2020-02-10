@@ -41,7 +41,7 @@ defmodule Historian.Buffer do
   end
 
   def handle_call(:list, _from, buffer) do
-    {head, tail} = Enum.split((0..buffer.max_size), buffer.clock)
+    {head, tail} = Enum.split(0..buffer.max_size, buffer.clock)
     indexes = Enum.reverse(head) ++ Enum.reverse(tail)
 
     results =

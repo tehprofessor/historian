@@ -58,7 +58,11 @@ defmodule Historian.TUi.EditArchiveItem do
         {:editing_entry, %{element_cursor: %{cursor: 0}} = edit_item}
       )
       when key in @delete_keys do
-    term = if is_atom(edit_item.object.name), do: ":#{edit_item.object.name}", else: edit_item.object.name
+    term =
+      if is_atom(edit_item.object.name),
+        do: ":#{edit_item.object.name}",
+        else: edit_item.object.name
+
     new_value = String.slice(term, 0..-2)
 
     {:editing_entry, %{edit_item | object: %{edit_item.object | name: new_value}}}
@@ -139,7 +143,11 @@ defmodule Historian.TUi.EditArchiveItem do
         {:editing_entry, %{element_cursor: %{cursor: 0}} = edit_item}
       )
       when ch > 0 do
-    term = if is_atom(edit_item.object.name), do: ":#{edit_item.object.name}", else: edit_item.object.name
+    term =
+      if is_atom(edit_item.object.name),
+        do: ":#{edit_item.object.name}",
+        else: edit_item.object.name
+
     new_value = term <> <<ch::utf8>>
     {:editing_entry, %{edit_item | object: %{edit_item.object | name: new_value}}}
   end
