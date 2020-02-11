@@ -47,10 +47,6 @@ defmodule Historian.Config do
     Path.join(archive_root, filename)
   end
 
-  def entry_server_name do
-    Application.get_env(:historian, :entry_server_name, Historian.EntryServer)
-  end
-
   def history_server_name do
     Application.get_env(:historian, :history_server_name, Historian.HistoryServer)
   end

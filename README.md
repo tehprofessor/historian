@@ -12,8 +12,9 @@
 An interactive history manager and snippet archival tool for IEx.
 ```
 
-_Notes:_
+_Work Log:_
 
+**Feb. 10, 2020** -- Major quality improvements to Historian module (it was mostly outdated as the internals changed), documentation still needs an update, still need to wire up setup action in the TUI.
 **Feb. 09, 2020** -- Welcome Screen added though setup isn't firing because it's not wired up yet (I just realized as I'm writing this...) Added some tests. Still need to clean up code and add gifs once setup is being called, but pretty close.
 **Feb. 08, 2020** -- Initial commit, a couple things missing (making setup easier, add archive entries through terminal UI, some commands need to be updated, add gifs here, and... I should add tests -_-;). I should have that finished by tomorrow afternoon.
 
@@ -29,32 +30,81 @@ I'll get that ironed out (soon).
 
 ## Features
 
-- [Navigating Pages](#View_History)
-- [Selecting Lines](#View_History)
-- [Searching](#View_History)
-- [Archiving](#View_History)
-
-As you read through the features list, you'll notice next to the header for that entry there are braces containing a character; that's the key to press for that section. There may be more options within each sections details, but I've put them there to make skimming this faster.
+- [View History](#View History)
+- [Archiving](#Archiving)
+- [Termianl UI](#Terminal UI)
 
 ### View History
 
-#### Interactive History `[1]`
+Lamest by itself feature ever, ha... and WRITE THIS DOCUMENTATION.
 
-Start an `iex` session after installing historian, and open it:
+#### Paging
+
+#### Filtering
+
+### Archiving
+
+A unique feature of Historian is the "archive of snipppets," i.e. the ability to save line(s), or your clipboard to an
+shortcut/alias/name.
+
+You can interact with Historian using the `Historian` module as outlined below or by using the TUI provided by calling `Historian.view_history/2`.
+
+#### Creating an Entry
+
+Creating an entry with a string:
+```elixir
+Historian.archive_entry!(:special_query, "query = from(...)")
+```
+
+from your clipboard contents:
+```elixir
+Historian.archive_from_clipboard!(:special_query)
+```
+
+or from the history buffer:
+
+```elixir
+Historian.archive_from_history!(:special_query, :pluck, [1,2,13,17,18,33])
+```
+
+#### Using an Entry
+
+You can then copy the entry to your clipboard with:
+
+```elixir
+Historian.copy(:special_query)
+```
+
+eval it directly:
+
+```elixir
+Historian.eval_entry(:special_query)
+```
+
+or even throw it into an anonymous function `fn/0`:
+
+```elixir
+my_fun = Historian.entry_to_fun(:special_query)
+```
+
+### Terminal UI
+
+In an `iex` session after installing historian, and start the historian ui with:
 ```
 iex> Historian.view_history()
 ```
 
-Or alternatively specifying the page size and offset:
+As you read through the TUI features list, you'll notice next to the header for that entry there are braces containing a character; that's the key to press for that section. There may be more options within each sections details, but I've put them there to make skimming this faster.
 
+#### Interactive History `[1]`
+
+Or alternatively specifying the page size and offset:
 ```
 iex> lines = 100
 iex> offset = 100
 # Default is 100 lines, with an offset of 0 (the most recent)
 iex> Historian.view_history(lines, offset)
 ```
-
-[add screenshot]
 
 #### Exiting Historian `[ctrl+d]`
 
@@ -67,22 +117,6 @@ You can view your history and scroll (`j` down/ `k` up) through entries, pressin
 #### Searching `[s]`
 
 When viewing your history you can press `s` and Historian will filter matches highlighting the matching portion.
-
-[add screenshot]
-
-### Archiving
-
-A unique feature of Historian is the ability to save a line (or lines) with an alias:
-
-`Historian.archive(:handy_query, "query = from(...)")`
-
-You can then copy the entry to your clipboard with:
-
-`Historian.copy(:handy_query)`
-
-Or even throw it into an anonymous function `fn/0`:
-
-`Historian.to_fun(:hand_query)`
 
 #### Interactive Archive `[2]`
 

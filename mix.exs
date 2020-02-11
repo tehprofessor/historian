@@ -13,9 +13,9 @@ defmodule Historian.MixProject do
       docs: [
         main: "README",
         extras: [
-          "README.md",
-        ],
-      ],
+          "README.md"
+        ]
+      ]
     ]
   end
 

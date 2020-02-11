@@ -335,7 +335,7 @@ defmodule Historian.TerminalUI do
 
   defp copy_to_clipboard(%HistoryViewModel{} = model, selected, [], _joiner) do
     item = Enum.find(model.items, &(&1.id == selected))
-    _ = Historian.Clipboard.copy(:macos, item.value)
+    _ = Historian.Clipboard.copy(item.value)
 
     {:copied_line, model}
   end
@@ -343,14 +343,14 @@ defmodule Historian.TerminalUI do
   defp copy_to_clipboard(%HistoryViewModel{} = model, _selected, selected_lines, joiner) do
     lines = for item <- model.items, item.id in selected_lines, do: item.value
     value = Enum.join(lines, joiner)
-    _ = Historian.Clipboard.copy(:macos, value)
+    _ = Historian.Clipboard.copy(value)
 
     {:copied_lines, model}
   end
 
   defp copy_to_clipboard(%SearchViewModel{} = model, selected, [], _joiner) do
     item = Enum.at(model.items, selected)
-    _ = Historian.Clipboard.copy(:macos, item.value)
+    _ = Historian.Clipboard.copy(item.value)
 
     {:copied_line, model}
   end
@@ -358,7 +358,7 @@ defmodule Historian.TerminalUI do
   defp copy_to_clipboard(%ArchiveViewModel{} = model, selected, [], joiner) do
     %{items: values} = Enum.at(model.items, selected)
     value = if is_list(values), do: Enum.join(values, joiner), else: values
-    _ = Historian.Clipboard.copy(:macos, value)
+    _ = Historian.Clipboard.copy(value)
 
     {:copied_line, model}
   end

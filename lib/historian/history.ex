@@ -19,11 +19,12 @@ defmodule Historian.History do
   def create(lines, name \\ :default) do
     for {line, index} <- Enum.with_index(lines), reduce: %__MODULE__{name: name} do
       instance ->
-        item = %Item{id: index, value: strip_line(line)}
+        item = %Item{id: index, value: strip_line(line), __meta__: %{length: length(line)}}
         %{instance | items: [item | instance.items]}
     end
   end
 
+  @spec search(t(Item.t()), Regex.t()) :: list(Item.t())
   def search(history, pattern) do
     Enum.filter(history.items, fn item -> item.value =~ pattern end)
   end

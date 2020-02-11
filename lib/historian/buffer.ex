@@ -31,7 +31,7 @@ defmodule Historian.Buffer do
   end
 
   def first() do
-    GenServer.call(__MODULE__, :list) |> List.first()
+    list() |> List.first()
   end
 
   def handle_call({:push, object}, _from, buffer) do
