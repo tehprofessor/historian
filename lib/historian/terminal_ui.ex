@@ -1,6 +1,8 @@
 defmodule Historian.TerminalUI do
   @behaviour Ratatouille.App
 
+  alias Historian.{Archive, Buffer, Clipboard, History, TUi}
+
   import Ratatouille.Constants, only: [key: 1]
 
   @spacebar key(:space)
@@ -27,7 +29,7 @@ defmodule Historian.TerminalUI do
     end
   end
 
-  defmodule EditArchiveItemViewModel do
+  defmodule ArchiveItemFormViewModel do
     alias Historian.TerminalUI.Cursor
 
     defstruct [:cursor, :source, :object, :element_cursor]
@@ -115,32 +117,29 @@ defmodule Historian.TerminalUI do
 
     def new(history, term) do
       {:ok, pattern} = Regex.escape(term) |> Regex.compile()
-      items = Historian.History.search(history, pattern)
+      items = History.search!(history, pattern)
       max_length = Enum.count(items)
       cursor = Cursor.new(:search_view, max_length)
       %__MODULE__{items: items, term: term, pattern: pattern, cursor: cursor}
     end
   end
 
-  def init(%{start_screen: :welcome}) do
-  end
-
   def init(_) do
-    case Historian.UserInterfaceServer.start_screen() do
-      :view_history ->
-        history = Historian.Buffer.first()
-        view_data = HistoryViewModel.new(history.items)
-        %__MODULE__{history: history, cursor: 0, screen: :view_history, data: view_data}
+    if Historian.Archive.configured?() do
 
-      _ ->
-        {:ok, window_height} = Ratatouille.Window.fetch(:height)
+      history = Buffer.first()
+      view_data = HistoryViewModel.new(history.items)
 
-        %__MODULE__{
-          history: nil,
-          cursor: Cursor.new(:welcome, max(44 - window_height, 0)),
-          screen: :welcome,
-          data: %{}
-        }
+      %__MODULE__{history: history, cursor: 0, screen: :view_history, data: view_data}
+    else
+      {:ok, window_height} = Ratatouille.Window.fetch(:height)
+
+      %__MODULE__{
+        history: nil,
+        cursor: Cursor.new(:welcome, max(44 - window_height, 0)),
+        screen: :welcome,
+        data: %{}
+      }
     end
   end
 
@@ -152,7 +151,14 @@ defmodule Historian.TerminalUI do
     case msg do
       {:event, %{ch: ?j}} -> Cursor.down!(state)
       {:event, %{ch: ?k}} -> Cursor.up!(state)
-      {:event, %{ch: ?y}} -> %{state | last_event: :install}
+      {:event, %{key: @enter}} ->
+        with {:ok, :setup_completed} <- Historian.Archive.setup!() do
+          history = Buffer.first()
+          view_data = HistoryViewModel.new(history.items)
+          %__MODULE__{history: history, cursor: 0, screen: :view_history, data: view_data}
+        end
+      {:event, %{ch: ?y}} ->
+        %{state | last_event: :install}
       _ -> %{state | last_event: nil}
     end
   end
@@ -201,19 +207,31 @@ defmodule Historian.TerminalUI do
 
   def update(%{screen: screen, last_event: nil} = state, {:event, %{ch: char}})
       when screen != :archive and char in [?a, ?2] do
-    archive_data = Historian.Archive.all()
+    archive_data = Archive.all()
     %{state | screen: :archive, data: ArchiveViewModel.new(archive_data), last_event: nil}
   end
 
   def update(%{screen: :archive, last_event: {:editing_entry, edit_item}} = state, msg) do
-    case Historian.TUi.EditArchiveItem.handle_event(msg, {:editing_entry, edit_item}) do
+    case Historian.TUi.ArchiveItemForm.handle_event(msg, {:editing_entry, edit_item}) do
       {:editing_entry_save, _} = save_event -> update(%{state | last_event: save_event}, msg)
       {event, updated_item} -> %{state | last_event: {event, updated_item}}
     end
   end
 
+  def update(%{screen: :archive, last_event: {:new_entry, edit_item}} = state, msg) do
+    case Historian.TUi.ArchiveItemForm.handle_event(msg, {:new_entry, edit_item}) do
+      {:new_entry_save, _} = save_event -> update(%{state | last_event: save_event}, msg)
+      {event, updated_item} -> %{state | last_event: {event, updated_item}}
+    end
+  end
+
+  def update(%{screen: :archive, last_event: {:new_entry_save, %{name: name}}} = state, _msg) do
+    archive_data = Archive.all()
+    %{state | data: ArchiveViewModel.new(archive_data), last_event: {:updated_entry, name}}
+  end
+
   def update(%{screen: :archive, last_event: {:editing_entry_save, %{name: name}}} = state, _msg) do
-    archive_data = Historian.Archive.all()
+    archive_data = Archive.all()
     %{state | data: ArchiveViewModel.new(archive_data), last_event: {:updated_entry, name}}
   end
 
@@ -223,7 +241,13 @@ defmodule Historian.TerminalUI do
         {:event, %{ch: ?j}} -> move_down(model)
         {:event, %{ch: ?k}} -> move_up(model)
         {:event, %{ch: ?y}} -> copy_to_clipboard(model, model.cursor.cursor, [])
-        {:event, %{ch: ?e}} -> edit_item(model)
+        {:event, %{ch: ?n}} -> new_item(model)
+        {:event, %{ch: ?e}} ->
+          if model.items == [] do
+            new_item(model)
+          else
+            edit_item(model)
+          end
         _ -> {nil, model}
       end
 
@@ -261,35 +285,42 @@ defmodule Historian.TerminalUI do
   end
 
   def render(%{screen: :welcome} = model) do
-    Historian.TUi.Welcome.render(model)
+    TUi.Welcome.render(model)
   end
 
   def render(%{screen: :view_history} = model) do
-    Historian.TUi.HistoryView.render(model)
+    TUi.HistoryView.render(model)
   end
 
   def render(%{screen: :archive} = model) do
-    Historian.TUi.ArchiveView.render(model)
+    TUi.ArchiveView.render(model)
   end
 
   def render(%{screen: :search, last_event: :copied_line} = state) do
-    Historian.TUi.Search.render(state)
+    TUi.Search.render(state)
   end
 
   def render(%{screen: :search, last_event: :select_search} = state) do
-    Historian.TUi.Search.render(state)
+    TUi.Search.render(state)
   end
 
   def render(%{screen: :search, last_event: _} = state) do
-    Historian.TUi.Search.render(state)
+    TUi.Search.render(state)
   end
 
   # - Actions
   defp edit_item(%ArchiveViewModel{items: items, cursor: cursor} = model) do
     item = Cursor.value_at(items, cursor)
-    edit_item_model = EditArchiveItemViewModel.new(item)
+    edit_item_model = ArchiveItemFormViewModel.new(item)
 
     {{:editing_entry, edit_item_model}, model}
+  end
+
+  defp new_item(%ArchiveViewModel{} = model) do
+    item = Archive.Item.new(:empty, [""])
+    edit_item_model = ArchiveItemFormViewModel.new(item)
+
+    {{:new_entry, edit_item_model}, model}
   end
 
   defp move_up(%HistoryViewModel{} = model) do
@@ -335,7 +366,7 @@ defmodule Historian.TerminalUI do
 
   defp copy_to_clipboard(%HistoryViewModel{} = model, selected, [], _joiner) do
     item = Enum.find(model.items, &(&1.id == selected))
-    _ = Historian.Clipboard.copy(item.value)
+    _ = Clipboard.copy(item.value)
 
     {:copied_line, model}
   end
@@ -343,14 +374,14 @@ defmodule Historian.TerminalUI do
   defp copy_to_clipboard(%HistoryViewModel{} = model, _selected, selected_lines, joiner) do
     lines = for item <- model.items, item.id in selected_lines, do: item.value
     value = Enum.join(lines, joiner)
-    _ = Historian.Clipboard.copy(value)
+    _ = Clipboard.copy(value)
 
     {:copied_lines, model}
   end
 
   defp copy_to_clipboard(%SearchViewModel{} = model, selected, [], _joiner) do
     item = Enum.at(model.items, selected)
-    _ = Historian.Clipboard.copy(item.value)
+    _ = Clipboard.copy(item.value)
 
     {:copied_line, model}
   end
@@ -358,7 +389,7 @@ defmodule Historian.TerminalUI do
   defp copy_to_clipboard(%ArchiveViewModel{} = model, selected, [], joiner) do
     %{items: values} = Enum.at(model.items, selected)
     value = if is_list(values), do: Enum.join(values, joiner), else: values
-    _ = Historian.Clipboard.copy(value)
+    _ = Clipboard.copy(value)
 
     {:copied_line, model}
   end

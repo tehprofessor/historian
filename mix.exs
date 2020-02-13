@@ -10,6 +10,10 @@ defmodule Historian.MixProject do
       compilers: [:gettext] ++ Mix.compilers(),
       source_url: "https://github.com/tehprofessor/historian",
       deps: deps(),
+      dialyzer: [
+        plt_add_deps: :transitive,
+        ignore_warnings: ".dialyzer_ignore.exs"
+      ],
       docs: [
         main: "README",
         extras: [
@@ -23,9 +27,8 @@ defmodule Historian.MixProject do
     [
       extra_applications: [:logger],
       env: [
-        history_server: Historian.HistoryServer,
-        entry_server: Historian.EntryServer,
-        historian_path: "~/.config/historian"
+        archive_filename: "historian-db.ets",
+        archive_table_name: :historian_archive_db
       ],
       mod: {Historian.Application, []}
     ]
@@ -33,10 +36,10 @@ defmodule Historian.MixProject do
 
   defp deps do
     [
+      {:dialyxir, "~> 1.0-pre", only: :dev, runtime: false},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:gettext, "~> 0.17"},
-      {:ratatouille, "~> 0.5"},
-      {:scribe, "~> 0.10"}
+      {:ratatouille, "~> 0.5"}
     ]
   end
 end

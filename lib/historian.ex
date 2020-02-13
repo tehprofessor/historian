@@ -55,7 +55,7 @@ defmodule Historian do
       when action in [:pluck, :select] do
     history = current_buffer()
 
-    item =
+    items =
       case action do
         :select ->
           [start, stop] = action_opts
@@ -65,7 +65,8 @@ defmodule Historian do
           History.pluck(history, action_opts)
       end
 
-    archive_entry!(entry_name, item.value)
+    value = Enum.map(items, &(&1.value)) |> Enum.join("\n")
+    archive_entry!(entry_name, value)
   end
 
   @doc """
@@ -133,20 +134,16 @@ defmodule Historian do
     format_output(output, indexes, colorize: true) |> IO.puts()
   end
 
-  def print_lines(:last_result) do
-    current_buffer()
-    |> Scribe.print()
-  end
-
   @doc """
   Search the current history buffer for lines matching the term and print them to screen.
   """
   @spec search(String.t()) :: :ok
   def search(matching) do
     {:ok, regexp} = Regex.compile(matching)
-    results = current_buffer() |> History.search(regexp) |> highlight_lines(matching)
+    results = current_buffer() |> History.search!(regexp) |> highlight_lines(matching)
 
     _ok = format_output(:search, results, "#{matching}", colorize: true)
+    :ok
   end
 
   @doc """
@@ -232,10 +229,33 @@ defmodule Historian do
     item
   end
 
+  defp format_output(:archive, output, name, colorize: false) do
+    archive_text = gettext(@txt_output_for_archive) <> " #{name}:"
+    archive_text <> "\n" <> output
+  end
+
+  defp format_output(:archive, output, name, colorize: true) do
+    archive_text = gettext(@txt_output_for_archive) <> " "
+
+    IO.ANSI.format([
+      :yellow,
+      :bright,
+      archive_text,
+      :cyan,
+      name,
+      :yellow,
+      ":",
+      :reset,
+      :bright,
+      "\n",
+      output
+    ])
+  end
+
   # FIXME: These are not properly named and some are printing IO
   defp format_output(:search, output, name, colorize: false) do
     search_text = gettext(@txt_search_results_for) <> " #{name}:"
-    IO.puts(search_text)
+    :ok = IO.puts(search_text)
 
     print_table(:history, output)
   end
@@ -255,29 +275,6 @@ defmodule Historian do
     |> IO.puts()
 
     print_table(:history, output)
-  end
-
-  defp format_output(:archive, output, name, colorize: false) do
-    archive_text = gettext(@txt_output_for_archive) <> " #{name}:"
-    IO.puts(archive_text <> "\n" <> output)
-  end
-
-  defp format_output(:archive, output, name, colorize: true) do
-    archive_text = gettext(@txt_output_for_archive) <> " "
-
-    IO.ANSI.format([
-      :yellow,
-      :bright,
-      archive_text,
-      :cyan,
-      name,
-      :yellow,
-      ":",
-      :reset,
-      :bright,
-      "\n",
-      output
-    ])
   end
 
   defp format_output(output, indexes, colorize: false) do

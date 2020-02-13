@@ -14,6 +14,7 @@ defmodule Historian.TUi.ModalView do
   @txt_cancel "Cancel"
   @txt_content "Content"
   @txt_editing_entry "EDITING ENTRY!"
+  @txt_new_entry "NEW ENTRY!"
   @txt_save "Save"
   @txt_name "Name"
 
@@ -48,6 +49,19 @@ defmodule Historian.TUi.ModalView do
           end
         end
       end
+    end
+  end
+
+  def new_dialog_box(heading, content, rows, cursor, element_cursor) do
+    dialog_box(
+      gettext(@txt_new_entry),
+      heading,
+      gettext(@txt_save),
+      gettext(@txt_cancel),
+      15,
+      element_cursor
+    ) do
+      do_edit_dialog_box(content, rows, cursor, element_cursor)
     end
   end
 
