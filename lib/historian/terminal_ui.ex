@@ -68,7 +68,7 @@ defmodule Historian.TerminalUI do
     end
 
     def position(%{cursor: cursor, size: size}) do
-      size - cursor - 1
+      cursor
     end
 
     def up(%{cursor: cursor} = instance) do
@@ -126,8 +126,7 @@ defmodule Historian.TerminalUI do
 
   def init(_) do
     if Historian.Archive.configured?() do
-
-      history = Buffer.first()
+      history = page_buffer()
       view_data = HistoryViewModel.new(history.items)
 
       %__MODULE__{history: history, cursor: 0, screen: :view_history, data: view_data}
@@ -153,7 +152,7 @@ defmodule Historian.TerminalUI do
       {:event, %{ch: ?k}} -> Cursor.up!(state)
       {:event, %{key: @enter}} ->
         with {:ok, :setup_completed} <- Historian.Archive.setup!() do
-          history = Buffer.first()
+          history = page_buffer()
           view_data = HistoryViewModel.new(history.items)
           %__MODULE__{history: history, cursor: 0, screen: :view_history, data: view_data}
         end
@@ -269,7 +268,7 @@ defmodule Historian.TerminalUI do
         } = state,
         msg
       ) do
-    selected = size - cursor - 1
+    selected = cursor
 
     {event, updated_model} =
       case msg do
@@ -392,5 +391,9 @@ defmodule Historian.TerminalUI do
     _ = Clipboard.copy(value)
 
     {:copied_line, model}
+  end
+
+  defp page_buffer() do
+    Historian.current_buffer()
   end
 end

@@ -26,6 +26,10 @@ defmodule Historian.Buffer do
     GenServer.call(__MODULE__, {:push, object})
   end
 
+  def get(buffer_index) do
+    GenServer.call(__MODULE__, {:get, buffer_index})
+  end
+
   def list() do
     GenServer.call(__MODULE__, :list)
   end
@@ -38,6 +42,16 @@ defmodule Historian.Buffer do
     updated_buffer = do_push(buffer, object)
 
     {:reply, object, updated_buffer}
+  end
+
+  def handle_call({:get, buffer_index}, _from, buffer) do
+    result =
+      case :ets.lookup(__MODULE__, buffer_index) do
+        [] -> {:error, :no_buffer_at_index}
+        [{_index, result}] -> result
+      end
+
+    {:reply, result, buffer}
   end
 
   def handle_call(:list, _from, buffer) do

@@ -15,9 +15,9 @@ defmodule Historian.History do
     @type t :: %__MODULE__{id: non_neg_integer(), value: String.t(), __meta__: map()}
   end
 
-  @spec create(list(String.t()), atom()) :: t(Item.t())
+  @spec create(list({iolist(), non_neg_integer()}), atom()) :: t(Item.t())
   def create(lines, name \\ :default) do
-    for {line, index} <- Enum.with_index(lines), reduce: %__MODULE__{name: name} do
+    for {line, index} <- lines, reduce: %__MODULE__{name: name} do
       instance ->
         item = %Item{id: index, value: strip_line(line), __meta__: %{length: length(line)}}
         %{instance | items: [item | instance.items]}
@@ -89,8 +89,8 @@ defmodule Historian.History do
   Returns a line from the history buffer by it's index.
   """
   @spec line_at(history :: t(Item.t()), index :: non_neg_integer()) :: Item.t() | nil
-  def line_at(history, index) do
-    Enum.at(history, index)
+  def line_at(%{items: items} = history, index) do
+    Enum.at(items, index)
   end
 
   defp strip_line(line) do

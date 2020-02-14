@@ -3,16 +3,12 @@ defmodule Historian do
   Documentation for `Historian`.
   """
 
-  alias Historian.{Archive, Buffer, History}
+  alias Historian.{Archive, Buffer, History, PageBuffer}
 
   import Historian.Gettext
 
-  @txt_id_col_header "id"
   @txt_no_entry_for "No entry for"
   @txt_output_for_archive "Output for archive"
-  @txt_output_for_lines "Output for lines"
-  @txt_search_results_for "Search results for"
-  @txt_value_col_header "value"
 
   @doc """
   Create an archive entry with the given name and value.
@@ -65,7 +61,7 @@ defmodule Historian do
           History.pluck(history, action_opts)
       end
 
-    value = Enum.map(items, &(&1.value)) |> Enum.join("\n")
+    value = Enum.map(items, & &1.value) |> Enum.join("\n")
     archive_entry!(entry_name, value)
   end
 
@@ -119,7 +115,41 @@ defmodule Historian do
   end
 
   def current_buffer() do
-    Buffer.first()
+    pager = current_pager()
+    {:ok, history} = PageBuffer.current(pager)
+    history
+  end
+
+  def line(line_number) do
+    case current_pager() |> PageBuffer.get_line(line_number) do
+      %{value: value} -> to_string(value)
+      _ ->
+        _ = gettext("Invalid line number") |> IO.puts()
+        nil
+    end
+  end
+
+  @spec pages(page_size :: pos_integer()) :: pid()
+  def pages(page_size \\ 100) do
+    pager = new_page_buffer(page_size)
+
+    _ = page(pager, 1)
+
+    pager
+  end
+
+  @spec page(pager :: pid(), page :: pos_integer()) :: {:ok, String.t()}
+  def page(pager, page_number) do
+    with {:ok, %{items: items}} <- PageBuffer.get(pager, page_number) |> join_lines() do
+      output_title = " " <> to_string(page_number)
+
+      Historian.TextUI.page(items, [output_title], true)
+      |> IO.puts()
+    else
+      _ -> IO.puts("Page is out of bounds")
+    end
+
+    pager
   end
 
   @spec pluck(list(pos_integer())) :: {:ok, String.t()}
@@ -131,7 +161,9 @@ defmodule Historian do
   @spec print_pluck(list(pos_integer())) :: :ok
   def print_pluck(indexes) when is_list(indexes) do
     {:ok, output} = pluck(indexes)
-    format_output(output, indexes, colorize: true) |> IO.puts()
+
+    Historian.TextUI.lines(output, indexes, true)
+    |> IO.puts()
   end
 
   @doc """
@@ -140,10 +172,11 @@ defmodule Historian do
   @spec search(String.t()) :: :ok
   def search(matching) do
     {:ok, regexp} = Regex.compile(matching)
-    results = current_buffer() |> History.search!(regexp) |> highlight_lines(matching)
 
-    _ok = format_output(:search, results, "#{matching}", colorize: true)
-    :ok
+    current_buffer()
+    |> History.search!(regexp)
+    |> Historian.TextUI.search_results(matching)
+    |> IO.puts()
   end
 
   @doc """
@@ -156,9 +189,10 @@ defmodule Historian do
   """
   @spec select(non_neg_integer(), non_neg_integer()) :: :ok
   def select(start, stop) do
-    output = do_select(start, stop)
-    lines = join_lines(output)
-    format_output(lines, start..stop, colorize: true) |> IO.puts()
+    output = do_select(start, stop) |> join_lines()
+
+    Historian.TextUI.lines(output, ["#{start}..#{stop}"], true)
+    |> IO.puts()
   end
 
   @doc """
@@ -195,8 +229,9 @@ defmodule Historian do
     - start: Offset for number of lines.
   """
   @spec view_history(non_neg_integer(), non_neg_integer()) :: :ok
-  def view_history(lines \\ 50, start \\ 0) do
-    fetch_group_history(start, lines)
+  def view_history(lines \\ 100, page \\ 0) do
+    pager = new_page_buffer(lines)
+    _ = PageBuffer.set_page(pager, page)
 
     Ratatouille.run(Historian.TerminalUI, quit_events: [key: Ratatouille.Constants.key(:ctrl_d)])
   end
@@ -252,153 +287,20 @@ defmodule Historian do
     ])
   end
 
-  # FIXME: These are not properly named and some are printing IO
-  defp format_output(:search, output, name, colorize: false) do
-    search_text = gettext(@txt_search_results_for) <> " #{name}:"
-    :ok = IO.puts(search_text)
-
-    print_table(:history, output)
+  defp current_pager() do
+    case Buffer.first() do
+      pager when is_pid(pager) ->
+        if Process.alive?(pager),
+           do: pager,
+           else: new_page_buffer(100)
+      nil -> new_page_buffer(100)
+    end
   end
 
-  defp format_output(:search, output, name, colorize: true) do
-    search_text = gettext(@txt_search_results_for) <> " "
+  defp new_page_buffer(page_size) do
+    {:ok, pager} = PageBuffer.start_link(page_size)
+    _ = Buffer.push(pager)
 
-    IO.ANSI.format([
-      :yellow,
-      :bright,
-      search_text,
-      :cyan,
-      name,
-      :reset,
-      "\n\n"
-    ])
-    |> IO.puts()
-
-    print_table(:history, output)
-  end
-
-  defp format_output(output, indexes, colorize: false) do
-    lines = inspect(indexes)
-    gettext(@txt_output_for_lines) <> " #{lines}:" <> "\n----\n" <> output <> "\n----\n"
-  end
-
-  defp format_output(output, indexes, colorize: true) do
-    label_text = gettext(@txt_output_for_lines) <> " "
-    lines = inspect(indexes)
-
-    IO.ANSI.format([
-      :yellow,
-      :bright,
-      label_text,
-      :cyan,
-      lines,
-      :yellow,
-      ":",
-      :reset,
-      :bright,
-      "\n----\n",
-      :reset,
-      output,
-      :bright,
-      "\n----"
-    ])
-    |> to_string()
-  end
-
-  defp fetch_group_history(start, lines) do
-    history_slice =
-      :group_history.load()
-      |> Enum.slice(start + 1, lines)
-      |> History.create()
-
-    Buffer.push(history_slice)
-  end
-
-  defp highlight_lines(matching_items, term) do
-    highlighted =
-      IO.ANSI.format_fragment([IO.ANSI.color(1, 5, 3), :bright, term, :reset]) |> to_string()
-
-    matching_items
-    |> Enum.map(fn item ->
-      value = String.replace(item.value, term, highlighted)
-      %{item | value: value}
-    end)
-  end
-
-  defp col_padding(maximum, amount) do
-    String.duplicate(" ", max(maximum - amount, 0))
-  end
-
-  defp print_table(:history, []) do
-    IO.puts("[empty table]\n")
-  end
-
-  defp print_table(:history, lines) do
-    id_col_header = gettext(@txt_id_col_header)
-    value_col_header = gettext(@txt_value_col_header)
-    value_header_length = String.length(value_col_header) + 1
-    id_header_length = String.length(id_col_header)
-
-    max_line_length = Enum.map(lines, &String.length(&1.value)) |> Enum.max()
-    max_number_of_digits = Enum.count(lines) |> to_string() |> String.length()
-    max_id_col_length = max(max_number_of_digits, id_header_length)
-
-    padding_size = 2
-    padding = String.duplicate(" ", padding_size)
-
-    horizontal_separator_length = max_line_length + max_id_col_length + padding_size * 4
-
-    table_rows =
-      Enum.map(lines, fn %{id: index, value: line, __meta__: %{length: line_length}} ->
-        table_row(padding, index, line, line_length, max_id_col_length, max_line_length)
-      end)
-
-    horizontal_separator = ["+", String.duplicate("-", horizontal_separator_length), "+", "\n"]
-
-    header =
-      table_row(
-        padding,
-        id_col_header,
-        value_col_header,
-        value_header_length,
-        max_id_col_length,
-        max_line_length
-      )
-
-    [
-      horizontal_separator,
-      header,
-      horizontal_separator,
-      table_rows,
-      horizontal_separator
-    ]
-    |> IO.puts()
-  end
-
-  defp table_row(padding, index, value, value_length, max_index_length, max_value_length) do
-    index_string = to_string(index)
-    index_digits = index_string |> String.length()
-
-    extra_index_padding = col_padding(max_index_length, index_digits)
-    extra_line_padding = col_padding(max_value_length, value_length)
-
-    do_table_row(padding, index_string, extra_index_padding, value, extra_line_padding)
-  end
-
-  defp do_table_row(padding, id, extra_index_padding, value, extra_value_padding) do
-    [
-      "|",
-      padding,
-      extra_index_padding,
-      id,
-      padding,
-      "|",
-      padding,
-      value,
-      extra_value_padding,
-      padding,
-      "|",
-      "\n"
-    ]
+    pager
   end
 end

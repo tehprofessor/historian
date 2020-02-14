@@ -6,7 +6,6 @@ defmodule Historian.Application do
   def start(_type, _args) do
     children = [
       archive_spec(),
-      ui_server_spec(),
       # Create a process for the history buffer
       buffer_spec()
     ]
@@ -14,13 +13,6 @@ defmodule Historian.Application do
     opts = [strategy: :one_for_one, name: Historian.Supervisor]
 
     Supervisor.start_link(children, opts)
-  end
-
-  defp ui_server_spec() do
-    %{
-      id: Historian.UserInterfaceServer,
-      start: {Historian.UserInterfaceServer, :start_link, []}
-    }
   end
 
   defp archive_spec() do

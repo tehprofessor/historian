@@ -5,6 +5,8 @@ defmodule Historian.TUi.HistoryView do
   import Historian.TUi.Elements
   import Ratatouille.View
 
+  require Logger
+
   @status_bar_color :white
   @status_bar_bg :magenta
 
@@ -44,12 +46,12 @@ defmodule Historian.TUi.HistoryView do
     do_history_status_bar(gettext(@txt_selected_line), nil)
   end
 
-  def history_status_bar(:copied_lines, _unused) do
-    do_history_status_bar(gettext(@txt_copied_lines), nil)
-  end
-
   def history_status_bar(:copied_line, _unused) do
     do_history_status_bar(gettext(@txt_copied_line), nil)
+  end
+
+  def history_status_bar(:copied_lines, _unused) do
+    do_history_status_bar(gettext(@txt_copied_lines), nil)
   end
 
   def history_status_bar(_default, history_buffer_size) do

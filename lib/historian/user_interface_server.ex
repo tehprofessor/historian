@@ -1,5 +1,5 @@
 defmodule Historian.UserInterfaceServer do
-  @moduledoc false
+  @moduledoc "This is probably useless..."
 
   use GenServer
 

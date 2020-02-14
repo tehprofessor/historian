@@ -14,9 +14,10 @@ An interactive history manager and snippet archival tool for IEx.
 
 _Work Log:_
 
-**Feb. 10, 2020** -- Major quality improvements to Historian module (it was mostly outdated as the internals changed), documentation still needs an update, still need to wire up setup action in the TUI.
-**Feb. 09, 2020** -- Welcome Screen added though setup isn't firing because it's not wired up yet (I just realized as I'm writing this...) Added some tests. Still need to clean up code and add gifs once setup is being called, but pretty close.
-**Feb. 08, 2020** -- Initial commit, a couple things missing (making setup easier, add archive entries through terminal UI, some commands need to be updated, add gifs here, and... I should add tests -_-;). I should have that finished by tomorrow afternoon.
+- **Feb. 13, 2020** -- Okay, I think most everything is working, I'll likely push to hex tomorrow (friday the 14th).
+- **Feb. 10, 2020** -- Major quality improvements to Historian module (it was mostly outdated as the internals changed), documentation still needs an update, still need to wire up setup action in the TUI.
+- **Feb. 09, 2020** -- Welcome Screen added though setup isn't firing because it's not wired up yet (I just realized as I'm writing this...) Added some tests. Still need to clean up code and add gifs once setup is being called, but pretty close.
+- **Feb. 08, 2020** -- Initial commit, a couple things missing (making setup easier, add archive entries through terminal UI, some commands need to be updated, add gifs here, and... I should add tests -_-;). I should have that finished by tomorrow afternoon.
 
 ### Setup
 
@@ -38,7 +39,23 @@ I'll get that ironed out (soon).
 
 Lamest by itself feature ever, ha... and WRITE THIS DOCUMENTATION.
 
+```elixir
+# View the most recent line of your history
+Historian.line(0)
+# View the last (oldest) line of your history
+Historian.line(:infinity)
+```
+
 #### Paging
+
+```elixir
+page_size = 100
+# Creating a pager, takes an (in-memory) snapshot of your history, giving you an easier and more sane way to page
+# through it; since, each new line will not affect the offset.
+pager = Historian.pages(page_size)
+# Display the first page (100 most recent lines) of history
+_ = Historian.page(pager, 1)
+```
 
 #### Filtering
 
@@ -141,7 +158,7 @@ by adding `historian` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:historian, "~> 0.1.0"}
+    {:historian, "~> 0.11.1"}
   ]
 end
 ```
