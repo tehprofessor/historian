@@ -6,13 +6,14 @@ defmodule Historian.TextUI do
   import Historian.Gettext
 
   @txt_id_col_header "id"
+  @txt_name_col_header "name"
   @txt_output_for_lines "Output for lines"
   @txt_search_results_for "Search results for"
   @txt_viewing_page "Viewing page"
   @txt_value_col_header "value"
 
   # Looks like teal + cyan?
-  @search_color_term_label IO.ANSI.color(1, 5, 3)
+  # @search_color_term_label IO.ANSI.color(1, 5, 3)
 
   @table_decoration_wrap "+"
   @table_decoration_separator_rows "-"
@@ -81,6 +82,64 @@ defmodule Historian.TextUI do
     |     [empty]      |
     +------------------+
     """
+  end
+
+  def table([%Historian.Archive.Item{} | _rest] = lines) do
+    id_col_header = gettext(@txt_name_col_header)
+    value_col_header = gettext(@txt_value_col_header)
+    value_header_length = String.length(value_col_header) + 1
+    id_header_length = String.length(id_col_header)
+
+    line_data = Enum.map(lines, fn
+      %{items: value, name: name} when is_bitstring(value)->
+        value = String.replace(value, "\n", "\\n")
+        value_length = String.length(value)
+        %{id: to_string(name), value: value, length: value_length}
+      %{items: items, name: name} ->
+        value = Enum.map(items, &String.replace(&1, "\n", "\\n")) |> Enum.join("\\n")
+        %{id: to_string(name), value: value, length: String.length(value)}
+    end)
+
+    max_line_length = Enum.max_by(line_data, &(&1.length)) |> Map.get(:length)
+
+    max_number_of_digits = Enum.map(line_data, &String.length(&1.id)) |> Enum.max()
+    max_id_col_length = max(max_number_of_digits, id_header_length)
+
+    padding_size = 2
+    padding = String.duplicate(" ", padding_size)
+
+    horizontal_separator_length = max_line_length + max_id_col_length + padding_size * 4
+
+    table_rows =
+      Enum.map(line_data, fn %{id: index, value: line, length: line_length} ->
+        table_row(padding, index, line, line_length, max_id_col_length, max_line_length)
+      end)
+
+    horizontal_separator = [
+      @table_decoration_wrap,
+      String.duplicate(@table_decoration_separator_rows, horizontal_separator_length),
+      @table_decoration_wrap,
+      "\n"
+    ]
+
+    header =
+      table_row(
+        padding,
+        id_col_header,
+        value_col_header,
+        value_header_length,
+        max_id_col_length,
+        max_line_length
+      )
+
+    [
+      horizontal_separator,
+      header,
+      horizontal_separator,
+      table_rows,
+      horizontal_separator
+    ]
+    |> IO.iodata_to_binary()
   end
 
   def table(lines) do

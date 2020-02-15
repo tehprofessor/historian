@@ -1,7 +1,7 @@
 defmodule Historian.TerminalUI do
   @behaviour Ratatouille.App
 
-  alias Historian.{Archive, Buffer, Clipboard, History, TUi}
+  alias Historian.{Archive, Clipboard, History, PageBuffer, TUi}
 
   import Ratatouille.Constants, only: [key: 1]
 
@@ -67,7 +67,7 @@ defmodule Historian.TerminalUI do
       Enum.at(items, cursor)
     end
 
-    def position(%{cursor: cursor, size: size}) do
+    def position(%{cursor: cursor}) do
       cursor
     end
 
@@ -128,8 +128,14 @@ defmodule Historian.TerminalUI do
     if Historian.Archive.configured?() do
       history = page_buffer()
       view_data = HistoryViewModel.new(history.items)
+      screen_nav_cursor = Cursor.new(:screen_nav, 2)
 
-      %__MODULE__{history: history, cursor: 0, screen: :view_history, data: view_data}
+      %__MODULE__{
+        history: history,
+        cursor: screen_nav_cursor,
+        screen: :view_history,
+        data: view_data
+      }
     else
       {:ok, window_height} = Ratatouille.Window.fetch(:height)
 
@@ -148,17 +154,31 @@ defmodule Historian.TerminalUI do
 
   def update(%{screen: :welcome} = state, msg) do
     case msg do
-      {:event, %{ch: ?j}} -> Cursor.down!(state)
-      {:event, %{ch: ?k}} -> Cursor.up!(state)
+      {:event, %{ch: ?j}} ->
+        Cursor.down!(state)
+
+      {:event, %{ch: ?k}} ->
+        Cursor.up!(state)
+
       {:event, %{key: @enter}} ->
         with {:ok, :setup_completed} <- Historian.Archive.setup!() do
           history = page_buffer()
           view_data = HistoryViewModel.new(history.items)
-          %__MODULE__{history: history, cursor: 0, screen: :view_history, data: view_data}
+          screen_nav_cursor = Cursor.new(:screen_nav, 2)
+
+          %__MODULE__{
+            history: history,
+            cursor: screen_nav_cursor,
+            screen: :view_history,
+            data: view_data
+          }
         end
+
       {:event, %{ch: ?y}} ->
         %{state | last_event: :install}
-      _ -> %{state | last_event: nil}
+
+      _ ->
+        %{state | last_event: nil}
     end
   end
 
@@ -197,17 +217,33 @@ defmodule Historian.TerminalUI do
   end
 
   def update(
-        %{screen: screen, history: %{items: items}, last_event: nil} = state,
+        %{cursor: cursor, screen: screen, history: %{items: items}, last_event: nil} = state,
         {:event, %{ch: ?1}}
       )
       when screen not in [:view_history, :search] do
-    %{state | screen: :view_history, data: HistoryViewModel.new(items), last_event: nil}
+
+    cursor =
+      if Cursor.selected?(cursor, 0) do
+        cursor
+      else
+        Cursor.up(cursor)
+      end
+
+    %{state | screen: :view_history, data: HistoryViewModel.new(items), last_event: nil, cursor: cursor}
   end
 
-  def update(%{screen: screen, last_event: nil} = state, {:event, %{ch: char}})
+  def update(%{cursor: cursor, screen: screen, last_event: nil} = state, {:event, %{ch: char}})
       when screen != :archive and char in [?a, ?2] do
     archive_data = Archive.all()
-    %{state | screen: :archive, data: ArchiveViewModel.new(archive_data), last_event: nil}
+
+    cursor =
+      if Cursor.selected?(cursor, 1) do
+        cursor
+      else
+        Cursor.down(cursor)
+      end
+
+    %{state | screen: :archive, data: ArchiveViewModel.new(archive_data), last_event: nil, cursor: cursor}
   end
 
   def update(%{screen: :archive, last_event: {:editing_entry, edit_item}} = state, msg) do
@@ -237,17 +273,27 @@ defmodule Historian.TerminalUI do
   def update(%{screen: :archive, data: model} = state, msg) do
     {event, updated_model} =
       case msg do
-        {:event, %{ch: ?j}} -> move_down(model)
-        {:event, %{ch: ?k}} -> move_up(model)
-        {:event, %{ch: ?y}} -> copy_to_clipboard(model, model.cursor.cursor, [])
-        {:event, %{ch: ?n}} -> new_item(model)
+        {:event, %{ch: ?j}} ->
+          move_down(model)
+
+        {:event, %{ch: ?k}} ->
+          move_up(model)
+
+        {:event, %{ch: ?y}} ->
+          copy_to_clipboard(model, model.cursor.cursor, [])
+
+        {:event, %{ch: ?n}} ->
+          new_item(model)
+
         {:event, %{ch: ?e}} ->
           if model.items == [] do
             new_item(model)
           else
             edit_item(model)
           end
-        _ -> {nil, model}
+
+        _ ->
+          {nil, model}
       end
 
     %{state | data: updated_model, last_event: event}
@@ -264,7 +310,7 @@ defmodule Historian.TerminalUI do
   def update(
         %{
           screen: :view_history,
-          data: %{cursor: %{cursor: cursor, size: size}, selected_lines: selected_lines} = model
+          data: %{cursor: %{cursor: cursor}, selected_lines: selected_lines} = model
         } = state,
         msg
       ) do
@@ -394,6 +440,9 @@ defmodule Historian.TerminalUI do
   end
 
   defp page_buffer() do
-    Historian.current_buffer()
+    with {:ok, pager} <- Historian.UserInterfaceServer.get(nil),
+         {:ok, history} = PageBuffer.current(pager) do
+      history
+    end
   end
 end

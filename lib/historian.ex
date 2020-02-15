@@ -49,7 +49,7 @@ defmodule Historian do
   @spec archive_from_history!(atom(), :pluck | :slice, list(any())) :: String.t()
   def archive_from_history!(entry_name, action, action_opts \\ [])
       when action in [:pluck, :select] do
-    history = current_buffer()
+    history = current_history()
 
     items =
       case action do
@@ -114,7 +114,12 @@ defmodule Historian do
     end
   end
 
-  def current_buffer() do
+  defp page_history(pager) do
+    {:ok, history} = PageBuffer.current(pager)
+    history
+  end
+
+  def current_history() do
     pager = current_pager()
     {:ok, history} = PageBuffer.current(pager)
     history
@@ -129,18 +134,50 @@ defmodule Historian do
     end
   end
 
+  @spec next_page(pager :: pid()) :: pid()
+  def next_page(pager) do
+    with {:ok, %{items: items}} <- PageBuffer.next(pager),
+         %{page: current_page} <- PageBuffer.info(pager) do
+      output_title = " " <> to_string(current_page)
+
+      Historian.TextUI.page(items, [output_title], true)
+      |> IO.puts()
+    else
+      _ -> IO.puts("Page is out of bounds")
+    end
+
+    pager
+  end
+
   @spec pages(page_size :: pos_integer()) :: pid()
   def pages(page_size \\ 100) do
     pager = new_page_buffer(page_size)
 
-    _ = page(pager, 1)
+    _ = page(pager, 0)
 
     pager
   end
 
   @spec page(pager :: pid(), page :: pos_integer()) :: {:ok, String.t()}
   def page(pager, page_number) do
-    with {:ok, %{items: items}} <- PageBuffer.get(pager, page_number) |> join_lines() do
+    with {:ok, %{items: items}} <- PageBuffer.get(pager, page_number) do
+      output_title = " " <> to_string(page_number)
+
+      Historian.TextUI.page(items, [output_title], true)
+      |> IO.puts()
+    else
+      _ -> IO.puts("Page is out of bounds")
+    end
+
+    pager
+  end
+
+  @doc """
+  Print the page and update the process's current page to be the provided page number.
+  """
+  @spec page!(pager :: pid(), page :: pos_integer()) :: {:ok, String.t()}
+  def page!(pager, page_number) do
+    with {:ok, %{items: items}} <- PageBuffer.set_page(pager, page_number) do
       output_title = " " <> to_string(page_number)
 
       Historian.TextUI.page(items, [output_title], true)
@@ -158,6 +195,28 @@ defmodule Historian do
     {:ok, output}
   end
 
+  @spec prev_page(pager :: pid()) :: pid()
+  def prev_page(pager) do
+    with {:ok, %{items: items}} <- PageBuffer.prev(pager),
+         %{page: current_page} <- PageBuffer.info(pager) do
+      output_title = " " <> to_string(current_page)
+
+      Historian.TextUI.page(items, [output_title], true)
+      |> IO.puts()
+    else
+      _ -> IO.puts("Page is out of bounds")
+    end
+
+    pager
+  end
+
+  @spec print_archive() :: :ok
+  def print_archive() do
+    archive = Archive.all()
+    Historian.TextUI.page(archive, ["(ARCHIVE)"], true)
+    |> IO.puts()
+  end
+
   @spec print_pluck(list(pos_integer())) :: :ok
   def print_pluck(indexes) when is_list(indexes) do
     {:ok, output} = pluck(indexes)
@@ -171,9 +230,17 @@ defmodule Historian do
   """
   @spec search(String.t()) :: :ok
   def search(matching) do
+    current_pager() |> search(matching)
+  end
+
+  @doc """
+  Search the current history buffer for lines matching the term and print them to screen.
+  """
+  @spec search(page_buffer_pid :: pid(), String.t()) :: :ok
+  def search(pager, matching) do
     {:ok, regexp} = Regex.compile(matching)
 
-    current_buffer()
+    page_history(pager)
     |> History.search!(regexp)
     |> Historian.TextUI.search_results(matching)
     |> IO.puts()
@@ -221,6 +288,46 @@ defmodule Historian do
   end
 
   @doc """
+  An alias of `tui!/0`.
+  """
+  def view_page() do
+    tui!()
+  end
+
+  @doc """
+  Starts an interactive Historian session using the provided page buffer process. If no page number is provided the
+  current page from the given page buffer process will be used.
+
+  ## Parameters
+
+    - pager: The pid for a `Historian.PageBuffer` process.
+    - page: The page to show in the Terminal UI
+  """
+  @spec view_page(pager :: pid(), non_neg_integer() | nil) :: pid()
+  def view_page(pager, page_number \\ nil)
+
+  def view_page(pager, nil) do
+    tui!(pager)
+  end
+
+  def view_page(pager, page_number) do
+    _ = PageBuffer.set_page(pager, page_number)
+    tui!(pager)
+  end
+
+  def tui!(pager \\ nil)
+
+  def tui!(nil) do
+    current_pager() |> tui!()
+  end
+
+  def tui!(pager) when is_pid(pager) do
+    with {:ok, _ref} <- Historian.UserInterfaceServer.set(pager) do
+      _ = Ratatouille.run(Historian.TerminalUI, quit_events: [key: Ratatouille.Constants.key(:ctrl_d)])
+    end
+  end
+
+  @doc """
   Starts an interactive Historian session.
 
   ## Parameters
@@ -233,7 +340,7 @@ defmodule Historian do
     pager = new_page_buffer(lines)
     _ = PageBuffer.set_page(pager, page)
 
-    Ratatouille.run(Historian.TerminalUI, quit_events: [key: Ratatouille.Constants.key(:ctrl_d)])
+    tui!(pager)
   end
 
   defp do_select(start, stop) do

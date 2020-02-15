@@ -54,6 +54,11 @@ defmodule Historian.PageBuffer do
     GenServer.call(pager, :next_page)
   end
 
+  @spec prev(page_buffer_pid :: pid()) :: page_result()
+  def prev(pager) do
+    GenServer.call(pager, :prev_page)
+  end
+
   @spec set_page(page_buffer_pid :: pid(), pos_integer()) :: page_result()
   def set_page(pager, page) do
     GenServer.call(pager, {:set_page, page})
@@ -121,6 +126,13 @@ defmodule Historian.PageBuffer do
     {:ok, page} = get_page(table, page_number)
 
     result = Enum.find(page.items, &(&1.id == line_number))
+
+    {:reply, result, state}
+  end
+
+  def handle_call(:prev_page, _from, %{page: page} = state) do
+    state = %{state | page: page - 1}
+    result = get_page(state.table, state.page)
 
     {:reply, result, state}
   end

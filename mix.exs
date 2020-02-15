@@ -18,7 +18,8 @@ defmodule Historian.MixProject do
         main: "README",
         extras: [
           "README.md"
-        ]
+        ],
+        markdown_processor: ExDoc.Markdown.Earmark,
       ]
     ]
   end
@@ -37,6 +38,7 @@ defmodule Historian.MixProject do
   defp deps do
     [
       {:dialyxir, "~> 1.0-pre", only: :dev, runtime: false},
+      {:earmark, "~> 1.4", only: :dev},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:gettext, "~> 0.17"},
       {:ratatouille, "~> 0.5"}

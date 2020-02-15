@@ -18,6 +18,7 @@ defmodule Historian.TUi.HistoryView do
   @txt_viewing_history "VIEWING HISTORY"
 
   def render(%{
+        cursor: screen_cursor,
         data: %{items: items, cursor: %{size: max_length} = cursor, selected_lines: selected_ids},
         last_event: event
       }) do
@@ -25,7 +26,8 @@ defmodule Historian.TUi.HistoryView do
 
     {:ok, window_height} = Ratatouille.Window.fetch(:height)
 
-    top_bar = menu_bar(max_length)
+    top_bar = menu_bar(screen_cursor, 1)
+
     bottom_bar = history_status_bar(event, max_length)
     viewport_offset_y = viewport_offset(cursor, window_height)
 

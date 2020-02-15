@@ -1,80 +1,84 @@
 defmodule Historian.UserInterfaceServer do
-  @moduledoc "This is probably useless..."
+  @moduledoc "Stores the PageBuffer process for the TUI"
+
+  defstruct [:page_buffer, page_ref: nil]
 
   use GenServer
-
-  @scr_archive :archive
-  @scr_search :search
-  @scr_view_history :view_history
-  @scr_welcome :welcome
-
-  @screen_default @scr_welcome
-  @screens [@scr_archive, @scr_search, @scr_view_history, @scr_welcome]
-
-  @tr_initialize :initialize
-  @tr_setup_completed :setup_completed
-
-  @transitions [@tr_initialize, @tr_setup_completed]
 
   def start_link(_opts \\ []) do
     GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
   end
 
   def init(_) do
-    ui_state = %{screen: @screen_default, first_screen: @screen_default, last_transition: nil}
+    ui_state = %__MODULE__{page_buffer: nil, page_ref: nil}
 
     {:ok, ui_state}
   end
 
   @doc """
-  Returns the current screen the user is on
-  """
-  @spec current() :: atom()
-  def current() do
-    GenServer.call(__MODULE__, :current)
-  end
+  Get the current page buffer in the `#{inspect(__MODULE__)}` process.
 
-  def on_screen?(screen) when screen in @screens do
-    nil # Maybe todo
-  end
-
-  @doc """
-  Performs a state update to the UI server, tracking what to show the user.
+  Returns:
+    - `{:ok, page_buffer_pid}` - Success result.
+    - `{:error, :dead_pid}` - Page buffer process is nothing but a dreadful reminder of our endless march
+    towards death and being forgotten.
+    - `{:error, :stale_pid}` - Reference belongs to a stale pid, if you do not care about the old pid, you can call
+    this function with `nil` and it will return whatever the current pid is bypassing the reference check.
 
   ## Parameters
 
-    - name: An atom indicating which transition to perform, valid transitions are: #{inspect(@transitions)}
+    - page_ref: The reference returned when setting the page buffer or `nil` to skip stale ref check.
   """
-  def transition(name) when name in @transitions do
-    GenServer.call(__MODULE__, {:transition, name})
+  @spec get(page_ref :: reference() | nil) :: {:ok, page_buffer_pid :: pid()} | {:error, :dead_pid} | {:error, :stale_reference}
+  def get(nil) do
+    GenServer.call(__MODULE__, :get)
   end
 
-  def first_screen() do
-    GenServer.call(__MODULE__, :first_screen)
+  def get(page_ref) do
+    GenServer.call(__MODULE__, {:get, page_ref})
   end
 
-  def handle_call(:current, _from, ui_state) do
-    {:reply, ui_state.screen, ui_state}
+  @doc """
+  Sets the page buffer in the `#{inspect(__MODULE__)}` process, returns `{:ok, ref}` if the process has been
+  successfully set or `{:error, :dead_pid}` if the process's spark of life has been smothered in shite...
+
+  ## Parameters
+
+    - pager: The pid for a `Historian.PageBuffer` process.
+  """
+  @spec set(page_buffer_pid :: pid()) :: {:ok, reference()} | {:error, :dead_pid}
+  def set(page_buffer_pid) do
+    GenServer.call(__MODULE__, {:set, page_buffer_pid})
   end
 
-  def handle_call({:transition, event}, _from, ui_state) do
-    ui_state = perform_transition(ui_state, event)
-    {:reply, ui_state.screen, ui_state}
+  # - GenServer
+
+  def handle_call(:get, _from, %{page_buffer: page_buffer} = ui_state) do
+    if Process.alive?(page_buffer) do
+      {:reply, {:ok, page_buffer}, ui_state}
+    else
+      {:reply, {:error, :dead_pid}, ui_state}
+    end
   end
 
-  def handle_call(:first_screen, _from, ui_state) do
-    {:reply, ui_state.first_screen, ui_state}
+  def handle_call({:get, page_ref}, _from, %{page_pref: page_ref, page_buffer: page_buffer} = ui_state) do
+    if Process.alive?(page_buffer) do
+      {:reply, {:ok, page_buffer}, ui_state}
+    else
+      {:reply, {:error, :dead_pid}, ui_state}
+    end
   end
 
-  defp perform_transition(%{screen: nil} = ui_state, @tr_initialize) do
-    %{ui_state | screen: @scr_welcome}
+  def handle_call({:get, _stale_ref}, _from, ui_state) do
+    {:reply, {:error, :stale_reference}, ui_state}
   end
 
-  defp perform_transition(%{screen: @scr_welcome} = ui_state, @tr_setup_completed) do
-    %{ui_state | screen: @scr_view_history}
-  end
-
-  defp perform_transition(%{screen: @scr_view_history} = ui_state, @tr_setup_completed) do
-    ui_state
+  def handle_call({:set, pb_pid}, _from, ui_state) do
+    if Process.alive?(pb_pid) do
+      pb_ref = make_ref()
+      {:reply, {:ok, pb_ref}, %{ui_state | page_buffer: pb_pid, page_ref: pb_ref}}
+    else
+      {:reply, {:error, :dead_pid}, ui_state}
+    end
   end
 end

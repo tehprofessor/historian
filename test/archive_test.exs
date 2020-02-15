@@ -2,7 +2,10 @@ defmodule Historian.ArchiveTest do
   use ExUnit.Case
 
   alias Historian.Archive
+
   require Logger
+
+  @moduletag capture_log: true
 
   setup do
     table_name = :historian_testing_db

@@ -89,7 +89,7 @@ defmodule Historian.History do
   Returns a line from the history buffer by it's index.
   """
   @spec line_at(history :: t(Item.t()), index :: non_neg_integer()) :: Item.t() | nil
-  def line_at(%{items: items} = history, index) do
+  def line_at(%{items: items}, index) do
     Enum.at(items, index)
   end
 

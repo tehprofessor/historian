@@ -11,10 +11,11 @@ defmodule Historian.TUi.Search do
   @search "Search"
 
   def render(%{
-        data: %{items: items, term: term, pattern: pattern, cursor: %{size: size} = cursor},
+    cursor: screen_cursor,
+    data: %{items: items, term: term, pattern: pattern, cursor: %{size: size} = cursor},
         last_event: :copied_line
       }) do
-    top_bar = menu_bar(0)
+    top_bar = menu_bar(screen_cursor, 0)
     bottom_bar = search_status_bar(:select_search, size, gettext(@copied_line))
     %{id: selected} = Cursor.value_at(items, cursor)
 
@@ -39,10 +40,11 @@ defmodule Historian.TUi.Search do
   end
 
   def render(%{
-        data: %{items: items, term: term, pattern: pattern, cursor: %{size: size} = cursor},
+    cursor: screen_cursor,
+    data: %{items: items, term: term, pattern: pattern, cursor: %{size: size} = cursor},
         last_event: :select_search
       }) do
-    top_bar = menu_bar(0)
+    top_bar = menu_bar(screen_cursor, 0)
     bottom_bar = search_status_bar(:select_search, size, gettext(@navigating_results))
     %{id: selected} = Cursor.value_at(items, cursor)
 
@@ -67,10 +69,11 @@ defmodule Historian.TUi.Search do
   end
 
   def render(%{
-        data: %{items: items, cursor: %{size: size}, term: term, pattern: pattern},
+    cursor: screen_cursor,
+    data: %{items: items, cursor: %{size: size}, term: term, pattern: pattern},
         last_event: _
       }) do
-    top_bar = menu_bar(0)
+    top_bar = menu_bar(screen_cursor, 0)
     bottom_bar = search_status_bar(:searching, size, gettext(@searching))
 
     {:ok, window_height} = Ratatouille.Window.fetch(:height)

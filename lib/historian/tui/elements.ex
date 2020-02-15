@@ -1,4 +1,6 @@
 defmodule Historian.TUi.Elements do
+  alias Historian.TerminalUI.Cursor
+
   import Historian.Gettext
   import Ratatouille.View
 
@@ -47,7 +49,7 @@ defmodule Historian.TUi.Elements do
 
   @txt_history_buffer "History Buffer"
   @txt_archives "Archives"
-  def menu_bar(_selected_view) do
+  def menu_bar(cursor, _index \\ 0) do
     {:ok, window_width} = Ratatouille.Window.fetch(:width)
     # This is too much padding, but I honestly can't tell if makes any difference.
     history_text = gettext(@txt_history_buffer)
@@ -62,13 +64,15 @@ defmodule Historian.TUi.Elements do
       text(content: "  Historian", background: bg_color, color: color, attributes: [:bold])
     ]
 
-    menu_bar_items = [navigation_option(history_text, 1, color, bg_color) | menu_bar_items]
+    history_screen_item = screen_navigation(history_text, 1, color, bg_color, Cursor.selected?(cursor, 0))
+    menu_bar_items = [history_screen_item | menu_bar_items]
 
     menu_bar_items = [
       text(content: " --", background: :cyan, color: :black, attributes: []) | menu_bar_items
     ]
 
-    menu_bar_items = [navigation_option(archives_text, 2, color, bg_color) | menu_bar_items]
+    archive_screen_item = screen_navigation(archives_text, 2, color, bg_color, Cursor.selected?(cursor, 1))
+    menu_bar_items = [archive_screen_item | menu_bar_items]
 
     menu_bar_items = [
       text(content: bar_padding, background: :cyan, color: :black, attributes: [])
@@ -141,6 +145,24 @@ defmodule Historian.TUi.Elements do
       text(content: "#{key_binding}", color: color, background: bg, attributes: [:bold]),
       text(content: ")", color: color, background: bg),
       text(content: " #{name}", color: color, background: bg)
+    ]
+  end
+
+  def screen_navigation(name, key_binding, color, bg, true = _selected) do
+    [
+      text(content: " [", color: color, background: bg),
+      text(content: "#{key_binding}", color: color, background: bg, attributes: [:bold]),
+      text(content: "]", color: color, background: bg),
+      text(content: " #{name}", color: color, background: bg, attributes: [:bold, :underline]),
+    ]
+  end
+
+  def screen_navigation(name, key_binding, color, bg, _not_selected) do
+    [
+      text(content: " [", color: color, background: bg),
+      text(content: "#{key_binding}", color: color, background: bg),
+      text(content: "]", color: color, background: bg),
+      text(content: " #{name}", color: color, background: bg),
     ]
   end
 

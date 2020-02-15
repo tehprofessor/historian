@@ -28,13 +28,13 @@ defmodule Historian.TUi.ArchiveView do
   @txt_new_entry "new entry"
   @txt_cancel_new_entry "cancel without saving --"
 
-  def render(%{data: %{items: [], cursor: cursor} = _model, last_event: event}) do
+  def render(%{cursor: screen_cursor, data: %{items: [], cursor: cursor} = _model, last_event: event}) do
     {event, event_msg} = do_event(event)
     max_length = cursor.size
 
     {:ok, window_height} = Ratatouille.Window.fetch(:height)
 
-    top_bar = menu_bar(max_length)
+    top_bar = menu_bar(screen_cursor, 1)
 
     bottom_bar =
       case event do
@@ -75,14 +75,14 @@ defmodule Historian.TUi.ArchiveView do
     end
   end
 
-  def render(%{data: %{items: items, cursor: cursor} = _model, last_event: event}) do
+  def render(%{cursor: screen_cursor, data: %{items: items, cursor: cursor} = _model, last_event: event}) do
     {event, event_msg} = do_event(event)
     %{name: selected} = Cursor.value_at(items, cursor)
     max_length = cursor.size
 
     {:ok, window_height} = Ratatouille.Window.fetch(:height)
 
-    top_bar = menu_bar(max_length)
+    top_bar = menu_bar(screen_cursor, 1)
 
     bottom_bar =
       case event do
