@@ -7,15 +7,37 @@
 ██╔══██║██║╚════██║   ██║   ██║   ██║██╔══██╗██║██╔══██║██║╚██╗██║
 ██║  ██║██║███████║   ██║   ╚██████╔╝██║  ██║██║██║  ██║██║ ╚████║
 ╚═╝  ╚═╝╚═╝╚══════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝
-
+[beta]
 
 An interactive history manager and snippet archival tool for IEx.
 ```
+
+Historian is a developer tool to make interacting with your IEx history easier by providing text and/or graphical (TUI) utilities to search, page through, copy and paste, and even save specific line(s) or snippets to a persistent archive [_db_].
+
+Historian comes with two modes an inline "text mode" which you can interact with by calling `Historian` directly, or a "Terminal User Interface" (TUI) which provides a graphical interface for using Historian. Please see the [features](#features) section for a walkthrough of each.
+
+It's completely non-destructive to your history so give it a try, in fact, all it really does is make `:group_history` more pleasant to work with. 
+
+[_db_]: It's an ETS table persisted to disk, please see [installation and setup](#installation--setup) for more details.
+
+## Status
+
+Historian is in **beta**, and may have bugs, or usability issues on some platforms or configurations. It is a developer tool, intended to only be used in `:dev` so the risk of any harm is low.
+
+MacOS, Linux, and Windows are all supported but Linux and Windows have had the least amount of testing as of February 16, 2020. I will update this once on those platforms (under various configurations) is verified correct.
+
+### Bugs and Problems
+
+If you're feeling generous with your time, please create an issue with the details (including operating system, terminal application, and locale) and I will get it fixed up for you. Screenshots or gifs of issues are also tremendously helpful and appreciated.
+
+I am on Twitter and the Elixir slack under the same handle.
 
 ## Table of Contents
 
 - [Features](#features)
 - [Installation & Setup](#installation--setup)
+- [Configuration](#configuration)
+- [Acknowledgements](#configuration)
 - [License](#license)
 
 ## Features
@@ -26,7 +48,7 @@ An interactive history manager and snippet archival tool for IEx.
 - [Archiving](#archive)
     - [Creating an Entry](#creating-an-entry)
     - [Using an Entry](#using-an-entry)
-- [Termianl UI](#terminal-ui)
+- [Terminal UI](#terminal-ui)
     - [History `[1]`](#history-1)
     - [Exiting Historian `[ctrl+d]`](#exiting-historian-ctrld)
     - [Navigating Lines `[j]` / `[k]`](#navigating-lines-j--k)
@@ -55,7 +77,7 @@ View the 100 most recent lines of your history:
 
 ```elixir
 # We'll cover the pid in the section below
-_page_buffer_pid = Historian.pages()
+iex> _page_buffer_pid = Historian.pages()
 ```
 
 #### Paging
@@ -210,7 +232,7 @@ iex> Historian.tui!()
 Without providing any arguments, the UI defaults to showing the 100 most recent entries of your history. Passing in
 a `PageBuffer` process will open the UI to the buffer's current page.
 
-```
+```elixir
 iex> pager = Historian.pages(100)
 iex> Historian.tui!(pager)
 ```
@@ -318,8 +340,55 @@ If you try to run this right now it'll probably complain about the path for the 
 
 I'll get that ironed out (soon).
 
-[add screenshot]
 
+## Configuration
+
+Below are all the configuration options (and their defaults) available in Historian:
+
+```elixir
+# This is the path historian will use to persist the Archive's ets table.
+config :historian, :config_path, Path.join([System.user_home(), ".config", "historian"])
+
+# This is the filename for the Historian ets table.
+config :historian, :archive_filename, "historian-db.ets"
+
+# The name of the archive's `ets` table, no reason to change this unless you have a conflicting ets table (wow, what are the odds?).
+config :historian, :archive_table_name, :historian_archive_db
+
+# `nil` means unset and will be considered `true` at runtime, if you do not want to persist the archive to disk you must
+# set this to `false`.
+config :historian, :persist_archive, nil
+
+# A map of colors used by Historian. The primary purpose of this setting is for accessibility, I don't want someone to have a shitty experience because I was an asshole and chose colors that are hard for them to read. I will be adding a few different color schemes (like purely black/white and a high contrast) in a future release.
+config :historian, :colors, %{
+                              dialog_box_background: :white,
+                              dialog_box_cancel_text: :red,
+                              dialog_box_confirm_text: :cyan,
+                              dialog_box_content_panel_text: :black,
+                              dialog_box_label_background: :white,
+                              dialog_box_label_background_selected: :yellow,
+                              dialog_box_label_content_text: :yellow,
+                              dialog_box_selected_element: :yellow,
+                              dialog_box_text: :black,
+                              history_line_copied_line_ok: :yellow,
+                              history_line_multiselect_text_selected: :blue,
+                              history_split_view_panel_background_text: :black,
+                              history_split_view_panel_title_text: :cyan,
+                              screen_navigation_app_name_background: :cyan,
+                              screen_navigation_app_name_text: :black,
+                              screen_navigation_background: :black,
+                              screen_navigation_text: :white,
+                              screen_navigation_text_selected: :cyan,
+                              search_item_matching_text: :cyan,
+                              search_status_bar_background: :yellow,
+                              search_status_bar_text: :black
+                            }
+```
+
+
+## Acknowledgements
+
+Terminal UI powered by [ExTermbox](https://github.com/ndreynolds/ex_termbox) and [Ratatouille](https://github.com/ndreynolds/ratatouille)
 
 ## License
 

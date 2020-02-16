@@ -9,11 +9,13 @@ defmodule Historian.MixProject do
       start_permanent: Mix.env() == :prod,
       compilers: [:gettext] ++ Mix.compilers(),
       source_url: "https://github.com/tehprofessor/historian",
+      description: description(),
       deps: deps(),
       dialyzer: [
         plt_add_deps: :transitive,
         ignore_warnings: ".dialyzer_ignore.exs"
       ],
+      package: package(),
       docs: [
         main: "README",
         extras: [
@@ -42,6 +44,20 @@ defmodule Historian.MixProject do
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:gettext, "~> 0.17"},
       {:ratatouille, "~> 0.5"}
+    ]
+  end
+
+  def description do
+    "Historian is a developer tool to make interacting with your IEx history easier by providing text and/or graphical (TUI) utilities to search, page through, copy and paste, and even save specific line(s) or snippets to a persistent archive."
+  end
+
+  defp package do
+    [
+      app: "historian",
+      files: ~w(lib README.MD mix.exs .formatter.exs),
+      licenses: ["Apache-2.0"],
+      links: %{"GitHub" => "https://github.com/tehprofessor/historian"},
+      name: "historian",
     ]
   end
 end
