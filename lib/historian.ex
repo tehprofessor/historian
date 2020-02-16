@@ -3,12 +3,18 @@ defmodule Historian do
   Documentation for `Historian`.
   """
 
-  alias Historian.{Archive, Buffer, History, PageBuffer}
+  alias Historian.{
+    Archive,
+    Buffer,
+    Clipboard,
+    History,
+    PageBuffer,
+    UserInterfaceServer,
+    TerminalUI,
+    TextUI
+  }
 
   import Historian.Gettext
-
-  @txt_no_entry_for "No entry for"
-  @txt_output_for_archive "Output for archive"
 
   @doc """
   Create an archive entry with the given name and value.
@@ -32,7 +38,7 @@ defmodule Historian do
   """
   @spec archive_from_clipboard!(atom()) :: String.t() | {:error, any()}
   def archive_from_clipboard!(entry_name) do
-    with {:ok, data} <- Historian.Clipboard.paste() do
+    with {:ok, data} <- Clipboard.paste() do
       archive_entry!(entry_name, String.trim(data))
     end
   end
@@ -78,12 +84,12 @@ defmodule Historian do
   If you want to use Historian on a remote system, you'll need to properly configure SSH or coping lines _will fail_.
   Eventually, there will be a guide on how to use Historian with SSH.
   """
-  @spec copy(atom()) :: Historian.Clipboard.copy_result()
+  @spec copy(atom()) :: Clipboard.copy_result()
   def copy(entry_name) do
     item = Archive.read_value(entry_name)
-    lines = join_lines(item.items)
+    lines = TextUI.archive_item(item, nil, false, false)
 
-    Historian.Clipboard.copy(lines)
+    Clipboard.copy(lines)
   end
 
   @doc """
@@ -95,7 +101,9 @@ defmodule Historian do
   """
   @spec eval_entry(atom()) :: any()
   def eval_entry(entry_name) do
-    Archive.read_value(entry_name) |> join_lines() |> Code.eval_string()
+    Archive.read_value(entry_name)
+    |> TextUI.archive_item(nil, false, false)
+    |> Code.eval_string()
   end
 
   @doc """
@@ -107,7 +115,7 @@ defmodule Historian do
   """
   @spec entry_to_fun(atom()) :: (() -> any())
   def entry_to_fun(entry_name) do
-    code_snippet = Archive.read_value(entry_name) |> join_lines()
+    code_snippet = Archive.read_value(entry_name) |> TextUI.archive_item(nil, false, false)
 
     fn ->
       Code.eval_string(code_snippet)
@@ -127,7 +135,9 @@ defmodule Historian do
 
   def line(line_number) do
     case current_pager() |> PageBuffer.get_line(line_number) do
-      %{value: value} -> to_string(value)
+      {:ok, %{value: value}} ->
+        to_string(value)
+
       _ ->
         _ = gettext("Invalid line number") |> IO.puts()
         nil
@@ -140,7 +150,7 @@ defmodule Historian do
          %{page: current_page} <- PageBuffer.info(pager) do
       output_title = " " <> to_string(current_page)
 
-      Historian.TextUI.page(items, [output_title], true)
+      TextUI.page(items, [output_title], true)
       |> IO.puts()
     else
       _ -> IO.puts("Page is out of bounds")
@@ -149,21 +159,20 @@ defmodule Historian do
     pager
   end
 
-  @spec pages(page_size :: pos_integer()) :: pid()
-  def pages(page_size \\ 100) do
-    pager = new_page_buffer(page_size)
-
-    _ = page(pager, 0)
-
-    pager
+  @spec pages(page_size :: pos_integer()) :: pid() | {:error, any()}
+  def pages(page_size \\ 100) when is_integer(page_size) and page_size > 0 do
+    case new_page_buffer(page_size) do
+      pager when is_pid(pager) -> page(pager, 0)
+      error -> {:error, error}
+    end
   end
 
-  @spec page(pager :: pid(), page :: pos_integer()) :: {:ok, String.t()}
+  @spec page(pager :: pid(), page :: non_neg_integer()) :: pid()
   def page(pager, page_number) do
     with {:ok, %{items: items}} <- PageBuffer.get(pager, page_number) do
       output_title = " " <> to_string(page_number)
 
-      Historian.TextUI.page(items, [output_title], true)
+      TextUI.page(items, [output_title], true)
       |> IO.puts()
     else
       _ -> IO.puts("Page is out of bounds")
@@ -175,12 +184,12 @@ defmodule Historian do
   @doc """
   Print the page and update the process's current page to be the provided page number.
   """
-  @spec page!(pager :: pid(), page :: pos_integer()) :: {:ok, String.t()}
+  @spec page!(pager :: pid(), page :: non_neg_integer()) :: pid()
   def page!(pager, page_number) do
     with {:ok, %{items: items}} <- PageBuffer.set_page(pager, page_number) do
       output_title = " " <> to_string(page_number)
 
-      Historian.TextUI.page(items, [output_title], true)
+      TextUI.page(items, [output_title], true)
       |> IO.puts()
     else
       _ -> IO.puts("Page is out of bounds")
@@ -191,7 +200,7 @@ defmodule Historian do
 
   @spec pluck(list(pos_integer())) :: {:ok, String.t()}
   def pluck(indexes) when is_list(indexes) do
-    output = do_pluck(indexes) |> join_lines()
+    output = do_pluck(indexes) |> TextUI.history_item(false, false)
     {:ok, output}
   end
 
@@ -201,7 +210,7 @@ defmodule Historian do
          %{page: current_page} <- PageBuffer.info(pager) do
       output_title = " " <> to_string(current_page)
 
-      Historian.TextUI.page(items, [output_title], true)
+      TextUI.page(items, [output_title], true)
       |> IO.puts()
     else
       _ -> IO.puts("Page is out of bounds")
@@ -213,7 +222,8 @@ defmodule Historian do
   @spec print_archive() :: :ok
   def print_archive() do
     archive = Archive.all()
-    Historian.TextUI.page(archive, ["(ARCHIVE)"], true)
+
+    TextUI.page(archive, ["(ARCHIVE)"], true)
     |> IO.puts()
   end
 
@@ -221,7 +231,7 @@ defmodule Historian do
   def print_pluck(indexes) when is_list(indexes) do
     {:ok, output} = pluck(indexes)
 
-    Historian.TextUI.lines(output, indexes, true)
+    TextUI.lines(output, indexes, true)
     |> IO.puts()
   end
 
@@ -242,7 +252,7 @@ defmodule Historian do
 
     page_history(pager)
     |> History.search!(regexp)
-    |> Historian.TextUI.search_results(matching)
+    |> TextUI.search_results(matching)
     |> IO.puts()
   end
 
@@ -254,12 +264,17 @@ defmodule Historian do
     - start: Line number to start selecting lines at
     - stop: Line number to stop selecting lines at
   """
-  @spec select(non_neg_integer(), non_neg_integer()) :: :ok
+  @spec select(start :: non_neg_integer(), stop :: non_neg_integer()) :: {:ok, String.t()}
   def select(start, stop) do
-    output = do_select(start, stop) |> join_lines()
+    pager = current_pager()
+    select(pager, start, stop)
+  end
 
-    Historian.TextUI.lines(output, ["#{start}..#{stop}"], true)
-    |> IO.puts()
+  @spec select(pager :: pid(), start :: non_neg_integer(), stop :: non_neg_integer()) ::
+          {:ok, String.t()}
+  def select(pager, start, stop) do
+    output = do_select(pager, start, stop) |> TextUI.history_item(false, false)
+    {:ok, output}
   end
 
   @doc """
@@ -272,19 +287,9 @@ defmodule Historian do
   """
   @spec view_entry(atom, Keyword.t()) :: :ok
   def view_entry(name, opts \\ [pretty_print: false]) do
-    output =
-      case Archive.read_value(name) do
-        nil ->
-          gettext(@txt_no_entry_for) <> " #{inspect(name)}"
-
-        item ->
-          lines = join_lines(item.items)
-          output = if opts[:pretty_print], do: Code.format_string!(lines), else: lines
-
-          format_output(:archive, output, "#{name}", colorize: true)
-      end
-
-    IO.puts(output)
+    Archive.read_value(name)
+    |> TextUI.archive_item(name, true, opts[:pretty_print])
+    |> IO.puts()
   end
 
   @doc """
@@ -303,7 +308,7 @@ defmodule Historian do
     - pager: The pid for a `Historian.PageBuffer` process.
     - page: The page to show in the Terminal UI
   """
-  @spec view_page(pager :: pid(), non_neg_integer() | nil) :: pid()
+  @spec view_page(pager :: pid(), non_neg_integer() | nil) :: :ok | {:error, :dead_pid}
   def view_page(pager, page_number \\ nil)
 
   def view_page(pager, nil) do
@@ -322,8 +327,11 @@ defmodule Historian do
   end
 
   def tui!(pager) when is_pid(pager) do
-    with {:ok, _ref} <- Historian.UserInterfaceServer.set(pager) do
-      _ = Ratatouille.run(Historian.TerminalUI, quit_events: [key: Ratatouille.Constants.key(:ctrl_d)])
+    with {:ok, _ref} <- UserInterfaceServer.set(pager) do
+      _ =
+        Ratatouille.run(TerminalUI,
+          quit_events: [key: Ratatouille.Constants.key(:ctrl_d)]
+        )
     end
   end
 
@@ -343,71 +351,34 @@ defmodule Historian do
     tui!(pager)
   end
 
-  defp do_select(start, stop) do
-    Buffer.first()
-    |> History.slice!(start, stop)
+  defp do_select(pager, start, stop) do
+    {:ok, history} = PageBuffer.current(pager)
+
+    History.slice!(history, start, stop)
   end
 
   defp do_pluck(indexes) when is_list(indexes) do
-    Buffer.first()
+    current_history()
     |> History.pluck!(indexes)
-  end
-
-  defp join_lines(%Archive.Item{items: items}) do
-    join_lines(items)
-  end
-
-  defp join_lines([%History.Item{} | _rest] = items) do
-    items
-    |> Enum.map(&Map.get(&1, :value))
-    |> join_lines()
-  end
-
-  defp join_lines(items) when is_list(items) do
-    Enum.join(items, "\n")
-  end
-
-  defp join_lines(item) do
-    item
-  end
-
-  defp format_output(:archive, output, name, colorize: false) do
-    archive_text = gettext(@txt_output_for_archive) <> " #{name}:"
-    archive_text <> "\n" <> output
-  end
-
-  defp format_output(:archive, output, name, colorize: true) do
-    archive_text = gettext(@txt_output_for_archive) <> " "
-
-    IO.ANSI.format([
-      :yellow,
-      :bright,
-      archive_text,
-      :cyan,
-      name,
-      :yellow,
-      ":",
-      :reset,
-      :bright,
-      "\n",
-      output
-    ])
   end
 
   defp current_pager() do
     case Buffer.first() do
       pager when is_pid(pager) ->
         if Process.alive?(pager),
-           do: pager,
-           else: new_page_buffer(100)
-      nil -> new_page_buffer(100)
+          do: pager,
+          else: new_page_buffer(100)
+
+      nil ->
+        new_page_buffer(100)
     end
   end
 
   defp new_page_buffer(page_size) do
-    {:ok, pager} = PageBuffer.start_link(page_size)
-    _ = Buffer.push(pager)
+    with {:ok, pager} <- PageBuffer.start_link(page_size) do
+      _ = Buffer.push(pager)
 
-    pager
+      pager
+    end
   end
 end

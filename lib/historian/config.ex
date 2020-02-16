@@ -22,6 +22,18 @@ defmodule Historian.Config do
     end
   end
 
+  def color(name, default) do
+    colors = Application.get_env(:historian, :colors, %{})
+
+    case Map.get(colors, name) do
+      nil ->
+        colors = Map.put(colors, name, default)
+        Application.put_env(:historian, :colors, colors)
+        default
+      name -> name
+    end
+  end
+
   def archive_path do
     filename = archive_filename()
     archive_root = config_path()

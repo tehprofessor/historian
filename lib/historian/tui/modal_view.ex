@@ -3,13 +3,11 @@ defmodule Historian.TUi.ModalView do
   Creates modal or overlay views (primarily used by the archiving system)
   """
 
+  alias Historian.Config
   alias Historian.TerminalUI.Cursor
 
   import Historian.Gettext
   import Ratatouille.View
-
-  @background_color :white
-  @color :black
 
   @txt_cancel "Cancel"
   @txt_content "Content"
@@ -21,8 +19,13 @@ defmodule Historian.TUi.ModalView do
   @text_block_cursor_char "|"
 
   def dialog_box(title, heading, confirm, dismiss, height \\ 10, cursor \\ %Cursor{}, do: body) do
+    dialog_box_confirm_color = Config.color(:dialog_box_confirm_text, :cyan)
+    dialog_box_cancel_color = Config.color(:dialog_box_cancel_text, :red)
+    dialog_box_bg_color = Config.color(:dialog_box_background, :white)
+    dialog_box_text_color = Config.color(:dialog_box_text, :black)
+
     overlay do
-      panel title: title, height: height, color: @color, background: @background_color do
+      panel title: title, height: height, color: dialog_box_text_color, background: dialog_box_bg_color do
         row do
           column(size: 12) do
             focusable_element(0, cursor, {:name_panel, heading})
@@ -37,11 +40,11 @@ defmodule Historian.TUi.ModalView do
 
         row do
           column(size: 1) do
-            focusable_element(2, cursor, {:text, dismiss}, color: :red)
+            focusable_element(2, cursor, {:text, dismiss}, color: dialog_box_cancel_color)
           end
 
           column(size: 1) do
-            focusable_element(3, cursor, {:text, confirm}, color: :cyan)
+            focusable_element(3, cursor, {:text, confirm}, color: dialog_box_confirm_color)
           end
 
           column(size: 10) do
@@ -89,23 +92,37 @@ defmodule Historian.TUi.ModalView do
   end
 
   def focusable_element(index, %{cursor: index}, {:content_panel, viewable_lines}) do
-    content_element = label(content: viewable_lines <> @text_block_cursor_char, color: :yellow)
-    edit_content_panel(:yellow, content_element)
+    label_background_selected_color = Config.color(:dialog_box_label_background_selected, :yellow)
+    label_content_text = Config.color(:dialog_box_label_content_text, :yellow)
+
+    content_element = label(content: viewable_lines <> @text_block_cursor_char, color: label_content_text)
+    edit_content_panel(label_background_selected_color, content_element)
   end
 
   def focusable_element(_index, %{cursor: _position}, {:content_panel, viewable_lines}) do
-    content_element = label(content: viewable_lines, color: :yellow)
-    edit_content_panel(:white, content_element)
+    label_background_color = Config.color(:dialog_box_label_background, :white)
+    label_content_text = Config.color(:dialog_box_label_content_text, :yellow)
+
+    content_element = label(content: viewable_lines, color: label_content_text)
+    edit_content_panel(label_background_color, content_element)
   end
 
   def focusable_element(index, %{cursor: index}, {:name_panel, entry_name}) do
-    name_element = label(content: entry_name <> @text_block_cursor_char, color: :yellow)
-    edit_name_panel(:yellow, name_element)
+    label_background_selected_color = Config.color(:dialog_box_label_background_selected, :yellow)
+    label_content_text = Config.color(:dialog_box_label_content_text, :yellow)
+
+    name_element = label(content: entry_name <> @text_block_cursor_char, color: label_content_text)
+
+    edit_name_panel(label_background_selected_color, name_element)
   end
 
   def focusable_element(_index, %{cursor: _position}, {:name_panel, entry_name}) do
-    name_element = label(content: entry_name, color: :yellow)
-    edit_name_panel(:white, name_element)
+    label_background_color = Config.color(:dialog_box_label_background, :white)
+    label_content_text = Config.color(:dialog_box_label_content_text, :yellow)
+
+    name_element = label(content: entry_name, color: label_content_text)
+
+    edit_name_panel(label_background_color, name_element)
   end
 
   def highlight_element(true, text, :cyan) do
@@ -113,7 +130,8 @@ defmodule Historian.TUi.ModalView do
   end
 
   def highlight_element(true, text, color) do
-    label(content: text, color: color, background: :yellow, attributes: [:bold, :underline])
+    dialog_box_selected_element_background = Config.color(:dialog_box_selected_element, :yellow)
+    label(content: text, color: color, background: dialog_box_selected_element_background, attributes: [:bold, :underline])
   end
 
   def highlight_element(_falsy, text, color) do
@@ -136,10 +154,11 @@ defmodule Historian.TUi.ModalView do
 
   defp edit_name_panel(panel_bg, content) do
     panel_title = gettext(@txt_name)
+    panel_text_color = Config.color(:dialog_box_content_panel_text, :black)
 
     panel title: panel_title,
           background: panel_bg,
-          color: :black,
+          color: panel_text_color,
           attributes: [:bold] do
       content
     end
@@ -147,6 +166,7 @@ defmodule Historian.TUi.ModalView do
 
   defp edit_content_panel(panel_bg, content) do
     title_text = gettext(@txt_content)
+    panel_text_color = Config.color(:dialog_box_content_panel_text, :black)
 
     row do
       column(size: 12) do
@@ -154,7 +174,7 @@ defmodule Historian.TUi.ModalView do
           column(size: 12) do
             panel title: title_text,
                   background: panel_bg,
-                  color: :black,
+                  color: panel_text_color,
                   attributes: [:bold],
                   height: :fill do
               viewport(offset_y: 0) do

@@ -1,8 +1,12 @@
 defmodule Historian.TUi.Elements do
+  alias Historian.Config
   alias Historian.TerminalUI.Cursor
 
   import Historian.Gettext
   import Ratatouille.View
+
+  @txt_history_buffer "History Buffer"
+  @txt_archives "Archives"
 
   def column_panel(size, title, color, bg, offset_y, items, display_item_fn) do
     column(size: size) do
@@ -20,15 +24,23 @@ defmodule Historian.TUi.Elements do
 
   def history_item(event, line_id, content, current_selection_id, selected_ids)
       when is_list(selected_ids) do
+    history_item_selected_color = Config.color(:history_line_multiselect_text_selected, :blue)
+
     if Enum.member?(selected_ids, line_id) do
-      label(content: "#{content}", color: :blue, attributes: [:bold])
+      label(content: "#{content}", color: history_item_selected_color, attributes: [:bold])
     else
       history_item(event, line_id, content, current_selection_id)
     end
   end
 
   def history_item(:copied_line, selected_id, content, selected_id) do
-    label(content: "#{content}", color: :yellow, attributes: [:bold])
+    copied_line_color = Config.color(:history_line_copied_line_ok, :yellow)
+    label(content: "#{content}", color: copied_line_color, attributes: [:bold])
+  end
+
+  def history_item(:select_search, selected_id, content, selected_id) do
+    search_item_matching_text_color = Config.color(:search_item_matching_text, :cyan)
+    label(content: "#{content}", color: search_item_matching_text_color, attributes: [:bold])
   end
 
   def history_item(_event, selected_id, content, selected_id) do
@@ -47,8 +59,6 @@ defmodule Historian.TUi.Elements do
     column_panel(11, "Value", color, bg, offset_y, items, display_item_fn)
   end
 
-  @txt_history_buffer "History Buffer"
-  @txt_archives "Archives"
   def menu_bar(cursor, _index \\ 0) do
     {:ok, window_width} = Ratatouille.Window.fetch(:width)
     # This is too much padding, but I honestly can't tell if makes any difference.
@@ -57,25 +67,27 @@ defmodule Historian.TUi.Elements do
     magic_number = String.length("Historian  [1 #{history_text}] -- [2 #{archives_text}]")
     bar_padding = String.pad_trailing(" ", window_width - magic_number)
 
-    color = :black
-    bg_color = :cyan
+    menu_bar_background_color = Config.color(:screen_navigation_background, :black)
+    menu_bar_app_name_text_color = Config.color(:screen_navigation_app_name_text, :black)
+    menu_bar_app_name_background_color = Config.color(:screen_navigation_app_name_background, :cyan)
+    menu_bar_text_color = Config.color(:screen_navigation_text, :white)
 
     menu_bar_items = [
-      text(content: "  Historian", background: bg_color, color: color, attributes: [:bold])
+      text(content: "  Historian  ", background: menu_bar_app_name_background_color, color: menu_bar_app_name_text_color, attributes: [:bold])
     ]
 
-    history_screen_item = screen_navigation(history_text, 1, color, bg_color, Cursor.selected?(cursor, 0))
+    history_screen_item = screen_navigation(history_text, 1, menu_bar_text_color, menu_bar_background_color, Cursor.selected?(cursor, 0))
     menu_bar_items = [history_screen_item | menu_bar_items]
 
     menu_bar_items = [
-      text(content: " --", background: :cyan, color: :black, attributes: []) | menu_bar_items
+      text(content: " |", background: menu_bar_background_color, color: menu_bar_text_color, attributes: []) | menu_bar_items
     ]
 
-    archive_screen_item = screen_navigation(archives_text, 2, color, bg_color, Cursor.selected?(cursor, 1))
+    archive_screen_item = screen_navigation(archives_text, 2, menu_bar_text_color, menu_bar_background_color, Cursor.selected?(cursor, 1))
     menu_bar_items = [archive_screen_item | menu_bar_items]
 
     menu_bar_items = [
-      text(content: bar_padding, background: :cyan, color: :black, attributes: [])
+      text(content: bar_padding, background: menu_bar_background_color, color: menu_bar_background_color, attributes: [])
       | menu_bar_items
     ]
 
@@ -149,11 +161,13 @@ defmodule Historian.TUi.Elements do
   end
 
   def screen_navigation(name, key_binding, color, bg, true = _selected) do
+    menu_bar_text_selected_color = Config.color(:screen_navigation_text_selected, :cyan)
+
     [
       text(content: " [", color: color, background: bg),
-      text(content: "#{key_binding}", color: color, background: bg, attributes: [:bold]),
+      text(content: "#{key_binding}", color: menu_bar_text_selected_color, background: bg, attributes: [:bold]),
       text(content: "]", color: color, background: bg),
-      text(content: " #{name}", color: color, background: bg, attributes: [:bold, :underline]),
+      text(content: " #{name}", color: menu_bar_text_selected_color, background: bg, attributes: [:bold, :underline]),
     ]
   end
 

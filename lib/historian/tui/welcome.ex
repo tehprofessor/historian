@@ -33,12 +33,15 @@ defmodule Historian.TUi.Welcome do
   end
 
   def automatic_setup_text() do
+    keyboard_binding_text_color = Config.color(:welcome_keyboard_binding_text, :yellow)
+    welcome_body_text_color = Config.color(:welcome_body_text, :white)
+
     auto_config_perform =
       label do
         text(content: "Press")
-        text(content: " y", color: :yellow, attributes: [:bold])
+        text(content: " y", color: keyboard_binding_text_color, attributes: [:bold])
         text(content: " and then")
-        text(content: " enter", color: :yellow, attributes: [:bold])
+        text(content: " enter", color: keyboard_binding_text_color, attributes: [:bold])
         text(content: " to confirm.")
       end
 
@@ -56,7 +59,7 @@ defmodule Historian.TUi.Welcome do
 
     [
       label(content: ""),
-      label(content: "Automatic Setup\n", color: :white, attributes: [:underline, :bold]),
+      label(content: "Automatic Setup\n", color: welcome_body_text_color, attributes: [:underline, :bold]),
       label(content: "To have Historian setup a local archive database, using:\n"),
       auto_config_path,
       auto_config_filename,
@@ -67,19 +70,20 @@ defmodule Historian.TUi.Welcome do
   end
 
   def manual_setup_text() do
+    welcome_body_text_color = Config.color(:welcome_body_text, :white)
+
     [
       label(content: ""),
-      label(content: "Manual Setup\n", color: :white, attributes: [:underline, :bold]),
+      label(content: "Manual Setup\n", color: welcome_body_text_color, attributes: [:underline, :bold]),
       label(content: "Alternatively, you can set the path in your config.exs with:"),
       label(content: ""),
       label do
         text(
           content: "    config ",
-          color: :white,
+          color: welcome_body_text_color,
           attributes: [:bold]
         )
-
-        text(content: ":historian, :config_path, \"some/other/path\"\n", color: :white)
+        text(content: ":historian, :config_path, \"some/other/path\"\n", color: welcome_body_text_color)
       end,
       label(content: ""),
       label(content: "and then start historian again."),
@@ -88,12 +92,15 @@ defmodule Historian.TUi.Welcome do
   end
 
   def exit_setup_text() do
+    exit_header_color = Config.color(:welcome_header_text, :white)
+    keyboard_binding_text_color = Config.color(:welcome_keyboard_binding_text, :yellow)
+
     [
       label(content: ""),
-      label(content: "Exiting\n", color: :white, attributes: [:underline, :bold]),
+      label(content: "Exiting\n", color: exit_header_color, attributes: [:underline, :bold]),
       label do
         text(content: "To exit Historian, and return to IEx press")
-        text(content: " ctrl+d", color: :yellow, attributes: [:bold])
+        text(content: " ctrl+d", color: keyboard_binding_text_color, attributes: [:bold])
       end
     ]
   end
@@ -125,22 +132,22 @@ defmodule Historian.TUi.Welcome do
   end
 
   def welcome_status_bar(:install) do
-    color = :black
-    bg_color = :yellow
+    bg_color = Config.color(:welcome_status_bar_install_background, :yellow)
+    color = Config.color(:welcome_status_bar_install_text, :black)
 
     status_bar_items = [
       navigation_option(gettext("confirm setup"), gettext("enter"), color, bg_color),
       navigation_option(gettext("-- press any other key to cancel"), gettext(""), color, bg_color)
     ]
 
-    status_bar("INSTALL", :black, :yellow) do
+    status_bar("INSTALL", color, bg_color) do
       status_bar_items
     end
   end
 
   def welcome_status_bar(_) do
-    color = :black
-    bg_color = :white
+    bg_color = Config.color(:welcome_status_bar_background, :white)
+    color = Config.color(:welcome_status_bar_text, :black)
 
     status_bar_items = [
       navigation_option(gettext("install"), "y", color, bg_color),
@@ -149,7 +156,7 @@ defmodule Historian.TUi.Welcome do
       navigation_item(:quit, color, bg_color)
     ]
 
-    status_bar("SETUP", :black, :white) do
+    status_bar("SETUP", color, bg_color) do
       status_bar_items
     end
   end

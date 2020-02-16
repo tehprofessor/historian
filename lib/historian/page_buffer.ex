@@ -17,19 +17,19 @@ defmodule Historian.PageBuffer do
                  total_pages: non_neg_integer()
                }
 
-  @type page_result :: {:ok, History.t()} | {:ok, :done}
+  @type page_result :: {:ok, History.t(History.Item.t())} | {:ok, :done}
 
   @spec current(page_buffer_pid :: pid()) :: page_result()
   def current(pager) do
     GenServer.call(pager, {:get, :current_page})
   end
 
-  @spec get(page_buffer_pid :: pid(), pos_integer()) :: page_result()
+  @spec get(page_buffer_pid :: pid(), non_neg_integer()) :: page_result()
   def get(pager, page_number) do
     GenServer.call(pager, {:get, page_number})
   end
 
-  @spec get_line(page_buffer_pid :: pid(), line_number :: non_neg_integer()) :: page_result()
+  @spec get_line(page_buffer_pid :: pid(), line_number :: non_neg_integer()) :: {:ok, History.Item.t() | nil}
   def get_line(pager, line_number) do
     GenServer.call(pager, {:get_line, line_number})
   end
@@ -59,7 +59,7 @@ defmodule Historian.PageBuffer do
     GenServer.call(pager, :prev_page)
   end
 
-  @spec set_page(page_buffer_pid :: pid(), pos_integer()) :: page_result()
+  @spec set_page(page_buffer_pid :: pid(), non_neg_integer()) :: page_result()
   def set_page(pager, page) do
     GenServer.call(pager, {:set_page, page})
   end
@@ -106,7 +106,7 @@ defmodule Historian.PageBuffer do
     {:ok, history} = get_page(table, page - 1)
     result = List.last(history.items)
 
-    {:reply, result, state}
+    {:reply, {:ok, result}, state}
   end
 
   def handle_call({:get_line, 0}, _from, %{table: table} = state) do
@@ -114,7 +114,7 @@ defmodule Historian.PageBuffer do
 
     result = Enum.find(page.items, &(&1.id == 0))
 
-    {:reply, result, state}
+    {:reply, {:ok, result}, state}
   end
 
   def handle_call({:get_line, line_number}, _from, %{table: table, page_size: page_size} = state) do
@@ -127,7 +127,7 @@ defmodule Historian.PageBuffer do
 
     result = Enum.find(page.items, &(&1.id == line_number))
 
-    {:reply, result, state}
+    {:reply, {:ok, result}, state}
   end
 
   def handle_call(:prev_page, _from, %{page: page} = state) do

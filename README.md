@@ -12,14 +12,35 @@
 An interactive history manager and snippet archival tool for IEx.
 ```
 
-_Work Log:_
+## Table of Contents
 
-- **Feb. 13, 2020** -- Okay, I think most everything is working, I'll likely push to hex tomorrow (friday the 14th).
-- **Feb. 10, 2020** -- Major quality improvements to Historian module (it was mostly outdated as the internals changed), documentation still needs an update, still need to wire up setup action in the TUI.
-- **Feb. 09, 2020** -- Welcome Screen added though setup isn't firing because it's not wired up yet (I just realized as I'm writing this...) Added some tests. Still need to clean up code and add gifs once setup is being called, but pretty close.
-- **Feb. 08, 2020** -- Initial commit, a couple things missing (making setup easier, add archive entries through terminal UI, some commands need to be updated, add gifs here, and... I should add tests -_-;). I should have that finished by tomorrow afternoon.
+- [Features](#features)
+- [Installation & Setup](#installation--setup)
+- [License](#license)
 
-### Setup
+## Installation & Setup
+
+Historian need to be added as a dependency or installed as an archive.
+
+### Installation
+
+
+#### Project Dependency
+
+**BELOW IS NOTHING BUT LIES IT HAS NOT BEEN PUBLISHED JUST YET, ADD DEP USING GIT OR CHECKOUT LOCALLY**
+
+`Historian` is [available in Hex](https://hex.pm/docs/publish), the package can be installed
+by adding `historian` to your list of dependencies in `mix.exs`:
+
+```elixir
+def deps do
+  [
+    {:historian, "~> 0.11.1", only: :dev}
+  ]
+end
+```
+
+### Manual Setup
 
 If you try to run this right now it'll probably complain about the path for the historian archive db.
 
@@ -32,19 +53,21 @@ I'll get that ironed out (soon).
 ## Features
 
 - [View History](#view-history)
-    - [Paging](#console-paging)
-    - [Filtering](#console-filtering-history)
-- [Archiving](#console-archive)
-    - [Creating an Entry](#console-creating-an-archive-entry)
-    - [Using an Entry](#console-using-an-archive-entry)
+    - [Paging](#paging)
+    - [Filtering](#filtering)
+- [Archiving](#archive)
+    - [Creating an Entry](#creating-an-entry)
+    - [Using an Entry](#using-an-entry)
 - [Termianl UI](#terminal-ui)
-    - [History `[1]`](#tui-view-page)
-    - [Exiting Historian `[ctrl+d]`](#exiting-historian-tui)
-    - [Navigating Lines `[j]` / `[k]`](#navigating-history-tui)
-    - [Searching `[s]`](#searching-history-tui)
-    - [Viewing Your Archive `[2]`](#viewing-your-archive-tui)
+    - [History `[1]`](#history-1)
+    - [Exiting Historian `[ctrl+d]`](#exiting-historian-ctrld)
+    - [Navigating Lines `[j]` / `[k]`](#navigating-lines-j--k)
+    - [Searching `[s]`](#searching-s)
+    - [Viewing Your Archive `[2]`](#viewing-your-archive-2)
+    - [Editing An Archive Item `[e]`](#editing-an-archive-item-e)
+    - [New Archive Item `[n]`](#new-archive-item-n)
 
-### View History {#view-history}
+### View History
 
 View a specific line of history with `line = 0` being the most recent line in your history:
 
@@ -67,7 +90,7 @@ View the 100 most recent lines of your history:
 _page_buffer_pid = Historian.pages()
 ```
 
-#### Paging {#console-paging}
+#### Paging
 
 Because the history is constantly changing, you can freeze it at a point in time, by reusing the `Historian.PageBuffer` pid that is returned from calling `pages/1`.
 
@@ -112,7 +135,7 @@ pager = Historian.pages(page_size)
 _ = Historian.page(pager, 27)
 ```
 
-#### Filtering {#console-filtering-history}
+#### Filtering
 
 Historian provides a few simple ways to filter and view your history.
 
@@ -128,7 +151,7 @@ _ = Historian.search(pager, "Historian.")
 _ = Historian.search("Historian.")
 ```
 
-### Archive {#console-archive}
+### Archive
 
 A unique feature of Historian is the "archive of snipppets," i.e. the ability to save line(s), or your clipboard to an
 shortcut/alias/name.
@@ -141,7 +164,7 @@ Historian.print_archive()
 
 You can interact with Historian using the `Historian` module as outlined below or by using the TUI provided by calling `Historian.view_history/2`.
 
-#### Creating an Entry {#console-creating-an-archive-entry}
+#### Creating an Entry
 
 Creating an entry with a string:
 ```elixir
@@ -159,7 +182,7 @@ or from the history buffer:
 Historian.archive_from_history!(:special_query, :pluck, [1,2,13,17,18,33])
 ```
 
-#### Using an Entry {#console-using-an-archive-entry}
+#### Using an Entry
 
 You can then copy the entry to your clipboard with:
 
@@ -204,7 +227,7 @@ iex> Historian.tui!(pager)
 
 As you read through the TUI features list, you'll notice next to the header for that entry there are braces containing a character(s); that's the key to press for that section. There may be more options within each sections details, but I've put them there to make skimming this faster.
 
-#### History `[1]` {#tui-view-page}
+#### History `[1]`
 
 You can pass in a specific page number to view by using `Historian.view_page/2`:
 
@@ -225,22 +248,22 @@ iex> _ = Historian.page(pager, 11)
 iex> Historian.view_page(page)
 ```
 
-#### Exiting Historian `[ctrl+d]` {#exiting-historian-tui}
+#### Exiting Historian `[ctrl+d]`
 
 To leave the historian interface and return to your `iex` prompt just press `ctrl+d` at anytime in the historian UI.
 
-#### Navigating Lines `[j]` / `[k]` {#navigating-history-tui}
+#### Navigating Lines `[j]` / `[k]`
 
 You can view your history and scroll (`j` down/ `k` up) through entries, pressing `y` to copy the current line, `spacebar` to select multiple lines. Right now you cannot switch pages in the TUI, you gotta exit it first and change the page, this
 will be remedied in a future release.
 
-#### Searching `[s]` {#searching-history-tui}
+#### Searching `[s]`
 
 When viewing your history you can press `s` and Historian will filter entries on the page highlighting the matching portion,
 press `enter` to move up `k` and down `j` through entries and `y` to copy the selected line. Press `e` to refine your
 search.
 
-#### Viewing Your Archive `[2]` {#viewing-your-archive-tui}
+#### Viewing Your Archive `[2]`
 
 To view all archived materials using interactive mode, press `2` at anytime (except when searching, will be improved in a future release). You can navigate, select, and copy entries using the same `j`, `k`, and `y` commands as when viewing the history.
 
@@ -263,12 +286,12 @@ Thinger.create(%{}) \
 |> IO.inspect(label: "i am terrible at naming things")
 ```
 
-#### Editing an Archive Item `[e]` {#edit-archive-item-tui}
+#### Editing an Archive Item `[e]`
 
 Select an archive item and press `e` to edit the name and content. Please note the TUI assumes all names are atoms AND
 anything you write in there _will_ be turned into an atom[^1]. You can navigate the fields using the up `↑` and down `↓` arrows, once done, select either `cancel` or `save` and press `enter`.
 
-#### New Archive Item `[n]` {#new-archive-item-tui}
+#### New Archive Item `[n]`
 
 Select an archive item and press `n` to create a new item. Please note the TUI assumes all names are atoms AND
 anything you write in there _will_ be turned into an atom[^1]. You can navigate the fields using the up `↑` and down `↓` arrows, once done, select either `cancel` or `save` and press `enter`.
@@ -281,24 +304,13 @@ IO.inspect("contrived_example") \
 
 [^1]: If this is actually a problem for anyone, file an issue, and I'll make it configurable.
 
-## Installation {#installation}
-
-`Historian` is [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `historian` to your list of dependencies in `mix.exs`:
-
-```elixir
-def deps do
-  [
-    {:historian, "~> 0.11.1", only: :dev}
-  ]
-end
-```
+## Installation
 
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at [https://hexdocs.pm/historian](https://hexdocs.pm/historian).
 
-## License {#license}
+## License
 
 Copyright 2020 Tehprofessor
 

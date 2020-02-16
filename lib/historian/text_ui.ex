@@ -3,11 +3,15 @@ defmodule Historian.TextUI do
   Functions for outputting text directly to the terminal, i.e. the opposite of the TUI.
   """
 
+  alias Historian.{Archive, History}
+
   import Historian.Gettext
 
   @txt_id_col_header "id"
   @txt_name_col_header "name"
+  @txt_output_for_archive "Output for archive"
   @txt_output_for_lines "Output for lines"
+  @txt_no_entry_for "No entry for"
   @txt_search_results_for "Search results for"
   @txt_viewing_page "Viewing page"
   @txt_value_col_header "value"
@@ -19,7 +23,7 @@ defmodule Historian.TextUI do
   @table_decoration_separator_rows "-"
   @table_decoration_separator_cols "|"
 
-  def search_results(%Historian.History{items: results}, term) do
+  def search_results(%History{items: results}, term) do
     search_results(results, term)
   end
 
@@ -30,6 +34,56 @@ defmodule Historian.TextUI do
       " #{term}:\n",
       results_table
     ]
+  end
+
+  def history_item(nil, _colorize, _pretty_print) do
+    ""
+  end
+
+  def history_item([%History.Item{} | _rest] = items, false, false) do
+    join_lines(items)
+  end
+
+  def archive_item(nil, nil, _colorize, _pretty_print) do
+    ""
+  end
+
+  def archive_item(%Archive.Item{items: items}, nil, false, false) do
+    join_lines(items)
+  end
+
+  def archive_item(nil, name, _colorize, _pretty_print) do
+    gettext(@txt_no_entry_for) <> " #{inspect(name)}"
+  end
+
+  def archive_item(%Archive.Item{items: items}, name, colorize, pretty_print) do
+    lines = join_lines(items)
+    output = if pretty_print, do: Code.format_string!(lines), else: lines
+
+    archive_item(output, "#{name}", colorize)
+  end
+
+  def archive_item(output, name, false = _colorize) do
+    archive_text = gettext(@txt_output_for_archive) <> " #{name}:"
+    archive_text <> "\n" <> output
+  end
+
+  def archive_item(output, name, true = _colorize) do
+    archive_text = gettext(@txt_output_for_archive) <> " "
+
+    IO.ANSI.format([
+      :yellow,
+      :bright,
+      archive_text,
+      :cyan,
+      name,
+      :yellow,
+      ":",
+      :reset,
+      :bright,
+      "\n",
+      output
+    ]) |> IO.iodata_to_binary()
   end
 
   def page(output, indexes, colorize \\ false)
@@ -72,10 +126,6 @@ defmodule Historian.TextUI do
     |> IO.iodata_to_binary()
   end
 
-  def table(%Historian.History{items: lines}) do
-    table(lines)
-  end
-
   def table([]) do
     """
     +------------------+
@@ -84,7 +134,11 @@ defmodule Historian.TextUI do
     """
   end
 
-  def table([%Historian.Archive.Item{} | _rest] = lines) do
+  def table(%History{items: lines}) do
+    table(lines)
+  end
+
+  def table([%Archive.Item{} | _rest] = lines) do
     id_col_header = gettext(@txt_name_col_header)
     value_col_header = gettext(@txt_value_col_header)
     value_header_length = String.length(value_col_header) + 1
@@ -222,6 +276,24 @@ defmodule Historian.TextUI do
 
   defp highlighted_term(%{value: value} = item, term, highlighted) do
     %{item | value: String.replace(value, term, highlighted)}
+  end
+
+  defp join_lines(%Archive.Item{items: items}) do
+    join_lines(items)
+  end
+
+  defp join_lines([%History.Item{} | _rest] = items) do
+    items
+    |> Enum.map(&Map.get(&1, :value))
+    |> join_lines()
+  end
+
+  defp join_lines(items) when is_list(items) do
+    Enum.join(items, "\n")
+  end
+
+  defp join_lines(item) do
+    item
   end
 
   defp table_row(padding, index, value, value_length, max_index_length, max_value_length) do
