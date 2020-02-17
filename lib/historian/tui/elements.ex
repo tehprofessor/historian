@@ -69,25 +69,60 @@ defmodule Historian.TUi.Elements do
 
     menu_bar_background_color = Config.color(:screen_navigation_background, :black)
     menu_bar_app_name_text_color = Config.color(:screen_navigation_app_name_text, :black)
-    menu_bar_app_name_background_color = Config.color(:screen_navigation_app_name_background, :cyan)
+
+    menu_bar_app_name_background_color =
+      Config.color(:screen_navigation_app_name_background, :cyan)
+
     menu_bar_text_color = Config.color(:screen_navigation_text, :white)
 
     menu_bar_items = [
-      text(content: "  Historian  ", background: menu_bar_app_name_background_color, color: menu_bar_app_name_text_color, attributes: [:bold])
+      text(
+        content: "  Historian  ",
+        background: menu_bar_app_name_background_color,
+        color: menu_bar_app_name_text_color,
+        attributes: [:bold]
+      )
     ]
 
-    history_screen_item = screen_navigation(history_text, 1, menu_bar_text_color, menu_bar_background_color, Cursor.selected?(cursor, 0))
+    history_screen_item =
+      screen_navigation(
+        history_text,
+        1,
+        menu_bar_text_color,
+        menu_bar_background_color,
+        Cursor.selected?(cursor, 0)
+      )
+
     menu_bar_items = [history_screen_item | menu_bar_items]
 
     menu_bar_items = [
-      text(content: " |", background: menu_bar_background_color, color: menu_bar_text_color, attributes: []) | menu_bar_items
+      text(
+        content: " |",
+        background: menu_bar_background_color,
+        color: menu_bar_text_color,
+        attributes: []
+      )
+      | menu_bar_items
     ]
 
-    archive_screen_item = screen_navigation(archives_text, 2, menu_bar_text_color, menu_bar_background_color, Cursor.selected?(cursor, 1))
+    archive_screen_item =
+      screen_navigation(
+        archives_text,
+        2,
+        menu_bar_text_color,
+        menu_bar_background_color,
+        Cursor.selected?(cursor, 1)
+      )
+
     menu_bar_items = [archive_screen_item | menu_bar_items]
 
     menu_bar_items = [
-      text(content: bar_padding, background: menu_bar_background_color, color: menu_bar_background_color, attributes: [])
+      text(
+        content: bar_padding,
+        background: menu_bar_background_color,
+        color: menu_bar_background_color,
+        attributes: []
+      )
       | menu_bar_items
     ]
 
@@ -165,9 +200,19 @@ defmodule Historian.TUi.Elements do
 
     [
       text(content: " [", color: color, background: bg),
-      text(content: "#{key_binding}", color: menu_bar_text_selected_color, background: bg, attributes: [:bold]),
+      text(
+        content: "#{key_binding}",
+        color: menu_bar_text_selected_color,
+        background: bg,
+        attributes: [:bold]
+      ),
       text(content: "]", color: color, background: bg),
-      text(content: " #{name}", color: menu_bar_text_selected_color, background: bg, attributes: [:bold, :underline]),
+      text(
+        content: " #{name}",
+        color: menu_bar_text_selected_color,
+        background: bg,
+        attributes: [:bold, :underline]
+      )
     ]
   end
 
@@ -176,7 +221,7 @@ defmodule Historian.TUi.Elements do
       text(content: " [", color: color, background: bg),
       text(content: "#{key_binding}", color: color, background: bg),
       text(content: "]", color: color, background: bg),
-      text(content: " #{name}", color: color, background: bg),
+      text(content: " #{name}", color: color, background: bg)
     ]
   end
 

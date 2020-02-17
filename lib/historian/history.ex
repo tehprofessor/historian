@@ -44,7 +44,8 @@ defmodule Historian.History do
   @doc """
   Slice the history buffer's using the given bounds, and return a list containing only the sliced items.
   """
-  @spec slice(history :: t(Item.t()), start :: non_neg_integer(), stop :: integer()) :: t(Item.t())
+  @spec slice(history :: t(Item.t()), start :: non_neg_integer(), stop :: integer()) ::
+          t(Item.t())
   def slice(history, start, stop) do
     %{history | items: slice!(history, start, stop)}
   end
@@ -52,7 +53,8 @@ defmodule Historian.History do
   @doc """
   Slice the history buffer's using the given bounds, and return an updated buffer containing only the sliced items.
   """
-  @spec slice!(history :: t(Item.t()), start :: non_neg_integer(), stop :: integer()) :: list(Item.t())
+  @spec slice!(history :: t(Item.t()), start :: non_neg_integer(), stop :: integer()) ::
+          list(Item.t())
   def slice!(history, start, stop) do
     Enum.filter(history.items, fn %{id: id} -> Enum.member?(start..stop, id) end)
   end

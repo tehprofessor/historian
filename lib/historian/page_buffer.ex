@@ -8,14 +8,14 @@ defmodule Historian.PageBuffer do
   defstruct [:page_size, :total_pages, :offset, :page, :table, :item_count, :ref]
 
   @type t() :: %__MODULE__{
-                 item_count: non_neg_integer(),
-                 offset: non_neg_integer(),
-                 page: non_neg_integer(),
-                 page_size: pos_integer(),
-                 ref: reference(),
-                 table: pos_integer(),
-                 total_pages: non_neg_integer()
-               }
+          item_count: non_neg_integer(),
+          offset: non_neg_integer(),
+          page: non_neg_integer(),
+          page_size: pos_integer(),
+          ref: reference(),
+          table: pos_integer(),
+          total_pages: non_neg_integer()
+        }
 
   @type page_result :: {:ok, History.t(History.Item.t())} | {:ok, :done}
 
@@ -29,7 +29,8 @@ defmodule Historian.PageBuffer do
     GenServer.call(pager, {:get, page_number})
   end
 
-  @spec get_line(page_buffer_pid :: pid(), line_number :: non_neg_integer()) :: {:ok, History.Item.t() | nil}
+  @spec get_line(page_buffer_pid :: pid(), line_number :: non_neg_integer()) ::
+          {:ok, History.Item.t() | nil}
   def get_line(pager, line_number) do
     GenServer.call(pager, {:get_line, line_number})
   end
@@ -72,7 +73,14 @@ defmodule Historian.PageBuffer do
 
   def init(page_size) do
     table = :ets.new(__MODULE__, [:ordered_set, :public, {:write_concurrency, true}])
-    instance = %__MODULE__{page: 0, offset: 0, page_size: page_size, table: table, ref: make_ref()}
+
+    instance = %__MODULE__{
+      page: 0,
+      offset: 0,
+      page_size: page_size,
+      table: table,
+      ref: make_ref()
+    }
 
     {:ok, instance, {:continue, :sync_history}}
   end
@@ -120,8 +128,8 @@ defmodule Historian.PageBuffer do
   def handle_call({:get_line, line_number}, _from, %{table: table, page_size: page_size} = state) do
     page_number =
       if Integer.mod(page_size, line_number) == 0,
-         do: div(line_number, page_size),
-         else: div(line_number, page_size)
+        do: div(line_number, page_size),
+        else: div(line_number, page_size)
 
     {:ok, page} = get_page(table, page_number)
 

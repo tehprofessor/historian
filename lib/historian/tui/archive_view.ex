@@ -28,7 +28,11 @@ defmodule Historian.TUi.ArchiveView do
   @txt_new_entry "new entry"
   @txt_cancel_new_entry "cancel without saving --"
 
-  def render(%{cursor: screen_cursor, data: %{items: [], cursor: cursor} = _model, last_event: event}) do
+  def render(%{
+        cursor: screen_cursor,
+        data: %{items: [], cursor: cursor} = _model,
+        last_event: event
+      }) do
     {event, event_msg} = do_event(event)
     max_length = cursor.size
 
@@ -41,7 +45,6 @@ defmodule Historian.TUi.ArchiveView do
         :updated_entry ->
           update_text = gettext(@txt_successfully_updated) <> " #{inspect(event_msg)}"
           archive_status_bar(event, update_text)
-
 
         :new_entry ->
           archive_status_bar(event, editing_status_text(event, event_msg.element_cursor))
@@ -75,7 +78,11 @@ defmodule Historian.TUi.ArchiveView do
     end
   end
 
-  def render(%{cursor: screen_cursor, data: %{items: items, cursor: cursor} = _model, last_event: event}) do
+  def render(%{
+        cursor: screen_cursor,
+        data: %{items: items, cursor: cursor} = _model,
+        last_event: event
+      }) do
     {event, event_msg} = do_event(event)
     %{name: selected} = Cursor.value_at(items, cursor)
     max_length = cursor.size

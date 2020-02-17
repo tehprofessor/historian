@@ -1,5 +1,5 @@
 use Mix.Config
 
 config :logger,
-       level: :info,
-       metadata: :all
+  level: :info,
+  metadata: :all

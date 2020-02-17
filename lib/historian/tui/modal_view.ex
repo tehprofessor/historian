@@ -25,7 +25,10 @@ defmodule Historian.TUi.ModalView do
     dialog_box_text_color = Config.color(:dialog_box_text, :black)
 
     overlay do
-      panel title: title, height: height, color: dialog_box_text_color, background: dialog_box_bg_color do
+      panel title: title,
+            height: height,
+            color: dialog_box_text_color,
+            background: dialog_box_bg_color do
         row do
           column(size: 12) do
             focusable_element(0, cursor, {:name_panel, heading})
@@ -95,7 +98,9 @@ defmodule Historian.TUi.ModalView do
     label_background_selected_color = Config.color(:dialog_box_label_background_selected, :yellow)
     label_content_text = Config.color(:dialog_box_label_content_text, :yellow)
 
-    content_element = label(content: viewable_lines <> @text_block_cursor_char, color: label_content_text)
+    content_element =
+      label(content: viewable_lines <> @text_block_cursor_char, color: label_content_text)
+
     edit_content_panel(label_background_selected_color, content_element)
   end
 
@@ -111,7 +116,8 @@ defmodule Historian.TUi.ModalView do
     label_background_selected_color = Config.color(:dialog_box_label_background_selected, :yellow)
     label_content_text = Config.color(:dialog_box_label_content_text, :yellow)
 
-    name_element = label(content: entry_name <> @text_block_cursor_char, color: label_content_text)
+    name_element =
+      label(content: entry_name <> @text_block_cursor_char, color: label_content_text)
 
     edit_name_panel(label_background_selected_color, name_element)
   end
@@ -131,7 +137,13 @@ defmodule Historian.TUi.ModalView do
 
   def highlight_element(true, text, color) do
     dialog_box_selected_element_background = Config.color(:dialog_box_selected_element, :yellow)
-    label(content: text, color: color, background: dialog_box_selected_element_background, attributes: [:bold, :underline])
+
+    label(
+      content: text,
+      color: color,
+      background: dialog_box_selected_element_background,
+      attributes: [:bold, :underline]
+    )
   end
 
   def highlight_element(_falsy, text, color) do

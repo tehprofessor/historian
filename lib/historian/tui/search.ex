@@ -103,7 +103,9 @@ defmodule Historian.TUi.Search do
 
     row do
       column(size: 12) do
-        panel title: title, color: panel_title_text_color, background: panel_title_background_color do
+        panel title: title,
+              color: panel_title_text_color,
+              background: panel_title_background_color do
           label(content: " > " <> term)
         end
       end

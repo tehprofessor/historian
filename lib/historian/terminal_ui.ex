@@ -221,7 +221,6 @@ defmodule Historian.TerminalUI do
         {:event, %{ch: ?1}}
       )
       when screen not in [:view_history, :search] do
-
     cursor =
       if Cursor.selected?(cursor, 0) do
         cursor
@@ -229,7 +228,13 @@ defmodule Historian.TerminalUI do
         Cursor.up(cursor)
       end
 
-    %{state | screen: :view_history, data: HistoryViewModel.new(items), last_event: nil, cursor: cursor}
+    %{
+      state
+      | screen: :view_history,
+        data: HistoryViewModel.new(items),
+        last_event: nil,
+        cursor: cursor
+    }
   end
 
   def update(%{cursor: cursor, screen: screen, last_event: nil} = state, {:event, %{ch: char}})
@@ -243,7 +248,13 @@ defmodule Historian.TerminalUI do
         Cursor.down(cursor)
       end
 
-    %{state | screen: :archive, data: ArchiveViewModel.new(archive_data), last_event: nil, cursor: cursor}
+    %{
+      state
+      | screen: :archive,
+        data: ArchiveViewModel.new(archive_data),
+        last_event: nil,
+        cursor: cursor
+    }
   end
 
   def update(%{screen: :archive, last_event: {:editing_entry, edit_item}} = state, msg) do

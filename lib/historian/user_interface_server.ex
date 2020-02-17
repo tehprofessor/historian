@@ -29,7 +29,8 @@ defmodule Historian.UserInterfaceServer do
 
     - page_ref: The reference returned when setting the page buffer or `nil` to skip stale ref check.
   """
-  @spec get(page_ref :: reference() | nil) :: {:ok, page_buffer_pid :: pid()} | {:error, :dead_pid} | {:error, :stale_reference}
+  @spec get(page_ref :: reference() | nil) ::
+          {:ok, page_buffer_pid :: pid()} | {:error, :dead_pid} | {:error, :stale_reference}
   def get(nil) do
     GenServer.call(__MODULE__, :get)
   end
@@ -61,7 +62,11 @@ defmodule Historian.UserInterfaceServer do
     end
   end
 
-  def handle_call({:get, page_ref}, _from, %{page_pref: page_ref, page_buffer: page_buffer} = ui_state) do
+  def handle_call(
+        {:get, page_ref},
+        _from,
+        %{page_pref: page_ref, page_buffer: page_buffer} = ui_state
+      ) do
     if Process.alive?(page_buffer) do
       {:reply, {:ok, page_buffer}, ui_state}
     else

@@ -4,7 +4,7 @@ defmodule Historian.MixProject do
   def project do
     [
       app: :historian,
-      version: "0.11.1",
+      version: "0.11.0-beta.1",
       elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
       compilers: [:gettext] ++ Mix.compilers(),
@@ -21,7 +21,7 @@ defmodule Historian.MixProject do
         extras: [
           "README.md"
         ],
-        markdown_processor: ExDoc.Markdown.Earmark,
+        markdown_processor: ExDoc.Markdown.Earmark
       ]
     ]
   end
@@ -57,7 +57,7 @@ defmodule Historian.MixProject do
       files: ~w(lib README.MD mix.exs .formatter.exs),
       licenses: ["Apache-2.0"],
       links: %{"GitHub" => "https://github.com/tehprofessor/historian"},
-      name: "historian",
+      name: "historian"
     ]
   end
 end

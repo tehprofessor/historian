@@ -30,7 +30,9 @@ defmodule Historian.Config do
         colors = Map.put(colors, name, default)
         Application.put_env(:historian, :colors, colors)
         default
-      name -> name
+
+      name ->
+        name
     end
   end
 

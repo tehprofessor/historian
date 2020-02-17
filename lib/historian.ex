@@ -1,6 +1,9 @@
 defmodule Historian do
   @moduledoc """
-  Documentation for `Historian`.
+  Functions within this module provide the public interface for `Historian`.
+
+  If it's your first time using `Historian` please use `Historian.view_history/0` or `Historian.tui!/0` to setup the
+  persistent archive.
   """
 
   alias Historian.{

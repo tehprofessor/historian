@@ -11,7 +11,8 @@ defmodule Historian.ArchiveTest do
     table_name = :historian_testing_db
     _ = Application.put_env(:historian, :archive_table_name, table_name)
 
-    {:ok, %{filename: Historian.Config.archive_filename(), config_path: Historian.Config.config_path()}}
+    {:ok,
+     %{filename: Historian.Config.archive_filename(), config_path: Historian.Config.config_path()}}
   end
 
   describe "Archive.Item" do
@@ -20,7 +21,7 @@ defmodule Historian.ArchiveTest do
       item = Archive.Item.new(:womp_womp, ":boring")
 
       assert %Archive.Item{
-               __meta__: %{app_info: {:historian, 'historian', ^current_version}, created_at: _},
+               __meta__: %{app_info: {:historian, _description, ^current_version}, created_at: _},
                items: ":boring",
                name: :womp_womp
              } = item
@@ -40,7 +41,7 @@ defmodule Historian.ArchiveTest do
     assert Archive.read_value(archive, :yolo) == nil
   end
 
-  test "save!/0", %{config_path: config_path, filename: filename}do
+  test "save!/0", %{config_path: config_path, filename: filename} do
     old_table_name = Application.get_env(:historian, :archive_table_name)
     _ = Application.put_env(:historian, :archive_table_name, :historian_save_test)
 
@@ -54,6 +55,7 @@ defmodule Historian.ArchiveTest do
     _ = Archive.save!(archive)
 
     table_name = Application.get_env(:historian, :archive_table_name)
+
     # The table is named, and named tables cannot be loaded from disk, if a table with that name already exists in :ets.
     # Thus, before reloading it from disk, we must remove it
     _ = :ets.rename(table_name, :historian_save_test_old)
@@ -67,7 +69,7 @@ defmodule Historian.ArchiveTest do
     end)
 
     # Cleanup the testing database file.
-    ensure_dont_be_an_asshole!(config_path, filename)
+    assert_rm_test_database!(config_path, filename)
 
     _ = Application.put_env(:historian, :archive_table_name, old_table_name)
   end
@@ -79,9 +81,9 @@ defmodule Historian.ArchiveTest do
     _ = Application.put_env(:historian, :archive_filename, not_persisted_filename)
 
     {:ok, archive} = GenServer.start_link(Archive, :ok)
-#    _ = Archive.reload!()
-#    _ = wait_for_archive!()
-#
+    #    _ = Archive.reload!()
+    #    _ = wait_for_archive!()
+    #
     failed_persistence_off_message =
       "Failed! Saving Archive without persistence returned unexpected result."
 
@@ -97,16 +99,19 @@ defmodule Historian.ArchiveTest do
     _ = Application.put_env(:historian, :archive_filename, old_filename)
   end
 
-
   test "setup/0", %{config_path: config_path, filename: filename} do
     {:ok, archive} = GenServer.start_link(Archive, :ok)
 
-    assert Archive.configured?(archive) == false, "Failed setup test, archive is already configured. Please make sure tests are being properly cleaned up after."
+    assert Archive.configured?(archive) == false,
+           "Failed setup test, archive is already configured. Please make sure tests are being properly cleaned up after."
+
     assert Archive.setup!(archive) == {:ok, :setup_completed}
-    assert Archive.configured?(archive), "Error! Setup failed to configure the archive but returned {:ok, :setup_completed}"
+
+    assert Archive.configured?(archive),
+           "Error! Setup failed to configure the archive but returned {:ok, :setup_completed}"
 
     # Cleanup the testing database file.
-    ensure_dont_be_an_asshole!(config_path, filename)
+    assert_rm_test_database!(config_path, filename)
   end
 
   test "insert_value/2" do
@@ -119,7 +124,7 @@ defmodule Historian.ArchiveTest do
 
     assert [
              yolo: %Archive.Item{
-               __meta__: %{app_info: {:historian, 'historian', ^current_version}, created_at: _},
+               __meta__: %{app_info: {:historian, _description, ^current_version}, created_at: _},
                items: "IO.puts()",
                name: :yolo
              }
@@ -132,7 +137,7 @@ defmodule Historian.ArchiveTest do
     _ = Archive.insert_value(archive, :yolo, "IO.puts()")
 
     assert %Archive.Item{
-             __meta__: %{app_info: {:historian, 'historian', ^current_version}, created_at: _},
+             __meta__: %{app_info: {:historian, _description, ^current_version}, created_at: _},
              items: "IO.puts()",
              name: :yolo
            } = Archive.read_value(archive, :yolo)
@@ -160,7 +165,11 @@ defmodule Historian.ArchiveTest do
     Enum.each(expected_names, &Archive.insert_value(archive, &1, "IO.puts(#{&1})"))
 
     results = Archive.all(archive)
-    assert Enum.count(results) == 2, "Incorrect number of results\n\texpected: #{inspect(expected_names)}\n\tfound: #{inspect(Enum.map(results, &(&1.name)))}"
+
+    assert Enum.count(results) == 2,
+           "Incorrect number of results\n\texpected: #{inspect(expected_names)}\n\tfound: #{
+             inspect(Enum.map(results, & &1.name))
+           }"
 
     Enum.each(results, fn %{name: name} ->
       assert Enum.member?(expected_names, name),
@@ -168,11 +177,11 @@ defmodule Historian.ArchiveTest do
     end)
   end
 
-  defp ensure_dont_be_an_asshole!(__DIR__, filename) do
+  defp assert_rm_test_database!(__DIR__, filename) do
     assert File.rm!(Path.join(__DIR__, filename))
   end
 
-  defp ensure_dont_be_an_asshole!(config_path, "historian-db.ets" = filename) do
+  defp assert_rm_test_database!(config_path, "historian-db.ets" = filename) do
     fail_asshole!(config_path, filename)
   end
 

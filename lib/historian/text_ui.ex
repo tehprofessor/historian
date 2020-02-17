@@ -29,6 +29,7 @@ defmodule Historian.TextUI do
 
   def search_results(results, term) do
     results_table = highlight_matching_lines(results, term) |> table()
+
     [
       gettext(@txt_search_results_for),
       " #{term}:\n",
@@ -83,7 +84,8 @@ defmodule Historian.TextUI do
       :bright,
       "\n",
       output
-    ]) |> IO.iodata_to_binary()
+    ])
+    |> IO.iodata_to_binary()
   end
 
   def page(output, indexes, colorize \\ false)
@@ -144,17 +146,19 @@ defmodule Historian.TextUI do
     value_header_length = String.length(value_col_header) + 1
     id_header_length = String.length(id_col_header)
 
-    line_data = Enum.map(lines, fn
-      %{items: value, name: name} when is_bitstring(value)->
-        value = String.replace(value, "\n", "\\n")
-        value_length = String.length(value)
-        %{id: to_string(name), value: value, length: value_length}
-      %{items: items, name: name} ->
-        value = Enum.map(items, &String.replace(&1, "\n", "\\n")) |> Enum.join("\\n")
-        %{id: to_string(name), value: value, length: String.length(value)}
-    end)
+    line_data =
+      Enum.map(lines, fn
+        %{items: value, name: name} when is_bitstring(value) ->
+          value = String.replace(value, "\n", "\\n")
+          value_length = String.length(value)
+          %{id: to_string(name), value: value, length: value_length}
 
-    max_line_length = Enum.max_by(line_data, &(&1.length)) |> Map.get(:length)
+        %{items: items, name: name} ->
+          value = Enum.map(items, &String.replace(&1, "\n", "\\n")) |> Enum.join("\\n")
+          %{id: to_string(name), value: value, length: String.length(value)}
+      end)
+
+    max_line_length = Enum.max_by(line_data, & &1.length) |> Map.get(:length)
 
     max_number_of_digits = Enum.map(line_data, &String.length(&1.id)) |> Enum.max()
     max_id_col_length = max(max_number_of_digits, id_header_length)
@@ -202,8 +206,11 @@ defmodule Historian.TextUI do
     value_header_length = String.length(value_col_header) + 1
     id_header_length = String.length(id_col_header)
 
-    max_line_length = Enum.map(lines, &(&1.__meta__.length)) |> Enum.max()
-    max_number_of_digits = Enum.map(lines, &(&1.id)) |> Enum.max() |> to_string() |> String.length()
+    max_line_length = Enum.map(lines, & &1.__meta__.length) |> Enum.max()
+
+    max_number_of_digits =
+      Enum.map(lines, & &1.id) |> Enum.max() |> to_string() |> String.length()
+
     max_id_col_length = max(max_number_of_digits, id_header_length)
 
     padding_size = 2

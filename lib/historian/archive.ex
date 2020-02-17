@@ -157,7 +157,7 @@ defmodule Historian.Archive do
     _ = :ets.insert(state.table_name, {key, updated_item})
     _ = do_save!(state)
 
-      {:reply, :ok, state}
+    {:reply, :ok, state}
   end
 
   def handle_call({:update, %{name: new_key} = updated_item, %{name: old_key}}, _from, state) do
@@ -257,7 +257,12 @@ defmodule Historian.Archive do
     end
   end
 
-  defp persist_table(%{table_name: table_name, persisted: true, config_path: config_path, filename: filename}) do
+  defp persist_table(%{
+         table_name: table_name,
+         persisted: true,
+         config_path: config_path,
+         filename: filename
+       }) do
     db_file = db_file_path(config_path, filename) |> to_charlist()
 
     log_development_only(fn -> "saving archive<#{table_name}> to disk, at: #{db_file}" end)

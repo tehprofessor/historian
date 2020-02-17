@@ -60,7 +60,11 @@ defmodule Historian.TUi.Welcome do
 
     [
       label(content: ""),
-      label(content: "Automatic Setup\n", color: welcome_body_text_color, attributes: [:underline, :bold]),
+      label(
+        content: "Automatic Setup\n",
+        color: welcome_body_text_color,
+        attributes: [:underline, :bold]
+      ),
       label(content: "To have Historian setup a local archive database, using:\n"),
       auto_config_path,
       auto_config_filename,
@@ -75,7 +79,11 @@ defmodule Historian.TUi.Welcome do
 
     [
       label(content: ""),
-      label(content: "Manual Setup\n", color: welcome_body_text_color, attributes: [:underline, :bold]),
+      label(
+        content: "Manual Setup\n",
+        color: welcome_body_text_color,
+        attributes: [:underline, :bold]
+      ),
       label(content: "Alternatively, you can set the path in your config.exs with:"),
       label(content: ""),
       label do
@@ -84,7 +92,11 @@ defmodule Historian.TUi.Welcome do
           color: welcome_body_text_color,
           attributes: [:bold]
         )
-        text(content: ":historian, :config_path, \"some/other/path\"\n", color: welcome_body_text_color)
+
+        text(
+          content: ":historian, :config_path, \"some/other/path\"\n",
+          color: welcome_body_text_color
+        )
       end,
       label(content: ""),
       label(content: "and then start historian again."),

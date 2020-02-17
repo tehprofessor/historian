@@ -23,13 +23,13 @@ defmodule Historian.TUi.ArchiveItemForm do
   ]
 
   def maybe_render(%{
-    model: %{
-      object: %{items: values, name: name},
-      element_cursor: element_cursor,
-      cursor: cursor
-    },
-    last_event: :new_entry
-  }) do
+        model: %{
+          object: %{items: values, name: name},
+          element_cursor: element_cursor,
+          cursor: cursor
+        },
+        last_event: :new_entry
+      }) do
     content = if is_list(values), do: Enum.join(values, "\n"), else: values
 
     name = if is_atom(name), do: ":#{name}", else: name
@@ -58,14 +58,16 @@ defmodule Historian.TUi.ArchiveItemForm do
   def handle_event(
         {:event, %{key: @arrow_up}},
         {event, %{element_cursor: cursor} = edit_item}
-      ) when event in @events do
+      )
+      when event in @events do
     {event, %{edit_item | element_cursor: Cursor.up(cursor)}}
   end
 
   def handle_event(
         {:event, %{key: @arrow_down}},
         {event, %{element_cursor: cursor} = edit_item}
-      )  when event in @events do
+      )
+      when event in @events do
     {event, %{edit_item | element_cursor: Cursor.down(cursor)}}
   end
 
@@ -100,26 +102,26 @@ defmodule Historian.TUi.ArchiveItemForm do
 
     new_value = String.slice(term, 0..-2) |> String.split("\n")
 
-    {event,
-     %{edit_item | object: %{edit_item.object | items: new_value}, cursor: cursor}}
+    {event, %{edit_item | object: %{edit_item.object | items: new_value}, cursor: cursor}}
   end
 
   def handle_event(
         {:event, %{key: @enter}},
         {event, %{element_cursor: %{cursor: 1}} = edit_item}
-      ) when event in @events do
+      )
+      when event in @events do
     term = Enum.join(edit_item.object.items, "\n")
     new_value = String.split(term <> "\n", "\n")
     item_cursor = Cursor.up(edit_item.cursor)
 
-    {event,
-     %{edit_item | object: %{edit_item.object | items: new_value}, cursor: item_cursor}}
+    {event, %{edit_item | object: %{edit_item.object | items: new_value}, cursor: item_cursor}}
   end
 
   def handle_event(
         {:event, %{key: @enter}},
         {event, %{element_cursor: %{cursor: 2}} = edit_item}
-      ) when event in @events do
+      )
+      when event in @events do
     {:editing_entry_cancel, edit_item}
   end
 
