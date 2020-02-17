@@ -236,12 +236,12 @@ defmodule Historian.Archive do
   defp new_table_from_disk(config_path, filename) do
     db_file = db_file_path(config_path, filename)
     {:ok, table} = :ets.file2tab(to_charlist(db_file), verify: true)
-    Logger.debug(fn -> "Loaded table<#{table}> from disk: #{db_file}" end)
+    log_development_only(fn -> "Loaded table<#{table}> from disk: #{db_file}" end)
     table
   end
 
   defp new_table(table_name) do
-    Logger.debug(fn -> "create new table<#{table_name}> in memory" end)
+    log_development_only(fn -> "create new table<#{table_name}> in memory" end)
     :ets.new(table_name, [:named_table, :public])
   end
 
@@ -260,7 +260,8 @@ defmodule Historian.Archive do
   defp persist_table(%{table_name: table_name, persisted: true, config_path: config_path, filename: filename}) do
     db_file = db_file_path(config_path, filename) |> to_charlist()
 
-    Logger.debug(fn -> "saving archive<#{table_name}> to disk, at: #{db_file}" end)
+    log_development_only(fn -> "saving archive<#{table_name}> to disk, at: #{db_file}" end)
+
     with :ok <- :ets.tab2file(table_name, db_file) do
       {:ok, db_file}
     end
@@ -272,5 +273,13 @@ defmodule Historian.Archive do
 
   defp setup(server) do
     _ = GenServer.call(server, :setup)
+  end
+
+  defp log_development_only(message) do
+    project_config = Mix.Project.config()
+
+    if project_config && project_config[:app] == :historian do
+      Logger.debug(message)
+    end
   end
 end
