@@ -37,7 +37,8 @@ I am on Twitter and the Elixir slack under the same handle.
 - [Features](#features)
 - [Installation & Setup](#installation--setup)
 - [Configuration](#configuration)
-- [Acknowledgements](#configuration)
+- [Roadmap](#roadmap--planned-features)
+- [Acknowledgements](#acknowledgements)
 - [License](#license)
 
 ## Features
@@ -352,14 +353,19 @@ config :historian, :config_path, Path.join([System.user_home(), ".config", "hist
 # This is the filename for the Historian ets table.
 config :historian, :archive_filename, "historian-db.ets"
 
-# The name of the archive's `ets` table, no reason to change this unless you have a conflicting ets table (wow, what are the odds?).
+# The name of the archive's `ets` table, no reason to change this unless you
+# have a conflicting ets table (wow, what are the odds?).
 config :historian, :archive_table_name, :historian_archive_db
 
-# `nil` means unset and will be considered `true` at runtime, if you do not want to persist the archive to disk you must
-# set this to `false`.
+# `nil` means unset and will be considered `true` at runtime, if you do not
+# want to persist the archive to disk you must set this to `false`.
 config :historian, :persist_archive, nil
 
-# A map of colors used by Historian. The primary purpose of this setting is for accessibility, I don't want someone to have a shitty experience because I was an asshole and chose colors that are hard for them to read. I will be adding a few different color schemes (like purely black/white and a high contrast) in a future release.
+# A map of colors used by Historian. The primary purpose of this setting is for 
+# accessibility, I don't want someone to have a shitty experience because I was
+# an asshole and chose colors that are hard for them to read. I will be adding
+# a few different color schemes (like purely black/white and a high contrast) 
+# in a future release to make this a better experience.
 config :historian, :colors, %{
                               dialog_box_background: :white,
                               dialog_box_cancel_text: :red,
@@ -385,6 +391,23 @@ config :historian, :colors, %{
                             }
 ```
 
+## Roadmap & Planned Features
+
+- [ ] Black and white mode
+- [ ] High contrast mode
+- [ ] Help screen in the TUI
+- [ ] Setup CI setup with Github workflows
+- [ ] Change page of the current buffer from the TUI
+- [ ] Fix some terrible names of modules and functions (more so internally but public API could use some love)
+- [ ] User configurable keyboard bindings
+- [ ] More consistent UI making sure colors, text decorations, copy (verbiage), etc are consistent and coherent
+- [ ] Search your archive
+- [ ] Delete an item from your archive
+- [ ] Improve editing an archive entry experience (even if it's marginally so, as I'm not 100% not trying to pack a text editor in this bad-mama-jamma)
+- [ ] Mix tasks for using Historian without entering IEx
+- [ ] Mix tasks for: exporting, viewing, and backing up both your archive and history
+- [ ] Localization, `Gettext` is in use almost everywhere (probably not used well, but it's my first rodeo with it) except the welcome screen; unfortunately though, I only know English... contributors wanted for localization! :)
+- [ ] Make the `Welcome` TUI screen use `Gettext`
 
 ## Acknowledgements
 
