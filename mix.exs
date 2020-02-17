@@ -1,10 +1,12 @@
 defmodule Historian.MixProject do
   use Mix.Project
 
+  @version "0.11.0-beta.2"
+
   def project do
     [
       app: :historian,
-      version: "0.11.0-beta.2",
+      version: @version,
       elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
       compilers: [:gettext] ++ Mix.compilers(),
@@ -21,6 +23,8 @@ defmodule Historian.MixProject do
         extras: [
           "README.md"
         ],
+        source_ref: "v#{@version}",
+        source_url: "https://github.com/tehprofessor/historian",
         markdown_processor: ExDoc.Markdown.Earmark
       ]
     ]

@@ -313,14 +313,9 @@ anything you write in there _will_ be turned into an atom[^1]. You can navigate 
 
 ## Installation & Setup
 
-Historian need to be added as a dependency or installed as an archive.
+Historian need to be added as a dependency, and setup can be performed by running `Historian.tui!/0` from an `IEx` session.
 
 ### Installation
-
-
-#### Project Dependency
-
-**BELOW IS NOTHING BUT LIES IT HAS NOT BEEN PUBLISHED JUST YET, ADD DEP USING GIT OR CHECKOUT LOCALLY**
 
 `Historian` is [available in Hex](https://hex.pm/docs/publish), the package can be installed
 by adding `historian` to your list of dependencies in `mix.exs`:
@@ -328,19 +323,36 @@ by adding `historian` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:historian, "~> 0.11.1", only: :dev}
+    {:historian, "~> 0.11.0-beta", only: :dev}
   ]
 end
 ```
 
+### Automatic Setup
+
+Historian will launch a welcome screen the first time you use the Terminal UI, the easiest way is:
+
+```elixir
+iex> Historian.tui!()
+```
+
+It will detail the installation path and filename, to install press `y` and `enter` to confirm.
+
 ### Manual Setup
 
-If you try to run this right now it'll probably complain about the path for the historian archive db.
+If you'd prefer to manually setup Historian, here are the steps (which by the way show the defaults):
 
-`mkdir -p ~/.config/historian`
+1. Make a directory to store the archive ets file.
 
-I'll get that ironed out (soon).
+```shell script
+mkdir -p ~/.config/historian
+```
 
+2. Configure the `config_path` to be the directory you made in step 1
+
+```elixir
+config :historian, :config_path, Path.join([System.user_home(), ".config", "historian"])
+```
 
 ## Configuration
 
@@ -403,7 +415,7 @@ config :historian, :colors, %{
 - [ ] More consistent UI making sure colors, text decorations, copy (verbiage), etc are consistent and coherent
 - [ ] Search your archive
 - [ ] Delete an item from your archive
-- [ ] Improve editing an archive entry experience (even if it's marginally so, as I'm not 100% not trying to pack a text editor in this bad-mama-jamma)
+- [ ] Improve editing an archive entry experience (even if it's marginally so, as I'm 100% _not_ trying to pack a text editor in this bad-mama-jamma)
 - [ ] Mix tasks for using Historian without entering IEx
 - [ ] Mix tasks for: exporting, viewing, and backing up both your archive and history
 - [ ] Localization, `Gettext` is in use almost everywhere (probably not used well, but it's my first rodeo with it) except the welcome screen; unfortunately though, I only know English... contributors wanted for localization! :)
