@@ -4,7 +4,7 @@ defmodule Historian.MixProject do
   def project do
     [
       app: :historian,
-      version: "0.11.0-beta.1",
+      version: "0.11.0-beta.2",
       elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
       compilers: [:gettext] ++ Mix.compilers(),
@@ -17,7 +17,7 @@ defmodule Historian.MixProject do
       ],
       package: package(),
       docs: [
-        main: "README",
+        main: "readme",
         extras: [
           "README.md"
         ],
