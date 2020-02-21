@@ -1,7 +1,7 @@
-defmodule Historian.UserInterfaceServer do
-  @moduledoc "Stores the PageBuffer process for the TUI"
+defmodule Historian.UserInterface do
+  @moduledoc "Manages the state of the User Interface including the page buffer to use and color scheme."
 
-  defstruct [:page_buffer, page_ref: nil]
+  defstruct [:page_buffer, page_ref: nil, output_mode: 0]
 
   use GenServer
 
@@ -11,6 +11,8 @@ defmodule Historian.UserInterfaceServer do
 
   def init(_) do
     ui_state = %__MODULE__{page_buffer: nil, page_ref: nil}
+    scheme = Application.get_env(:historian, :color_scheme, nil)
+    _ = set_color_scheme!(scheme)
 
     {:ok, ui_state}
   end
@@ -37,6 +39,10 @@ defmodule Historian.UserInterfaceServer do
 
   def get(page_ref) do
     GenServer.call(__MODULE__, {:get, page_ref})
+  end
+
+  def update_color_scheme(color_scheme) do
+    set_color_scheme!(color_scheme)
   end
 
   @doc """
@@ -85,5 +91,10 @@ defmodule Historian.UserInterfaceServer do
     else
       {:reply, {:error, :dead_pid}, ui_state}
     end
+  end
+
+  def set_color_scheme!(scheme) do
+    colors = Historian.Styles.color_scheme(scheme)
+    Application.put_env(:historian, :colors, colors)
   end
 end

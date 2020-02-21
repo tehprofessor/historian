@@ -373,49 +373,83 @@ config :historian, :archive_table_name, :historian_archive_db
 # want to persist the archive to disk you must set this to `false`.
 config :historian, :persist_archive, nil
 
+# The default is probably not usable on light-background terminals, sorry! But,
+# you can select one of the `_light` alternatives listed directly below which 
+# will work. If these are all terrible for your setup, please make a PR with
+# the details and I'll get something made for you... or see the DIY colors
+# section below.
+config :historian,
+       :color_scheme,
+       :default
+#       :high_contrast_dark
+#       :high_contrast_light # For use on light-background terminals
+#       :black_and_white_dark
+#       :black_and_white_light # For use on light-background terminals
+
+# DIY Color Scheme #
+#
 # A map of colors used by Historian. The primary purpose of this setting is for 
-# accessibility, I don't want someone to have a shitty experience because I was
-# an asshole and chose colors that are hard for them to read. I will be adding
-# a few different color schemes (like purely black/white and a high contrast) 
-# in a future release to make this a better experience.
+# mainly for accessibility, I don't want someone to have a shitty experience because
+# I was an asshole and chose colors that are hard/impossible for them to read.
 config :historian, :colors, %{
-                              dialog_box_background: :white,
-                              dialog_box_cancel_text: :red,
-                              dialog_box_confirm_text: :cyan,
-                              dialog_box_content_panel_text: :black,
-                              dialog_box_label_background: :white,
-                              dialog_box_label_background_selected: :yellow,
-                              dialog_box_label_content_text: :yellow,
-                              dialog_box_selected_element: :yellow,
-                              dialog_box_text: :black,
-                              history_line_copied_line_ok: :yellow,
-                              history_line_multiselect_text_selected: :blue,
-                              history_split_view_panel_background_text: :black,
-                              history_split_view_panel_title_text: :cyan,
-                              screen_navigation_app_name_background: :cyan,
-                              screen_navigation_app_name_text: :black,
-                              screen_navigation_background: :black,
-                              screen_navigation_text: :white,
-                              screen_navigation_text_selected: :cyan,
-                              search_item_matching_text: :cyan,
-                              search_status_bar_background: :yellow,
-                              search_status_bar_text: :black
-                            }
+                                archive_item_current_line_background: :black,
+                                archive_item_current_line_text: :white,
+                                archive_panel_background: :black,
+                                archive_panel_title_text: :cyan,
+                                archive_status_bar_background: :green,
+                                archive_status_bar_text: :black,
+                                dialog_box_cancel_text: :red,
+                                dialog_box_confirm_text: :blue,
+                                dialog_box_content_text: :yellow,
+                                dialog_box_label_background: :white,
+                                dialog_box_label_background_selected: :yellow,
+                                dialog_box_label_content_text: :yellow,
+                                dialog_box_label_text: :black,
+                                dialog_box_label_text_selected: :black,
+                                dialog_box_panel_background: :white,
+                                dialog_box_panel_text: :black,
+                                history_current_line_background: :black,
+                                history_current_line_text: :white,
+                                history_line_background: :default,
+                                history_line_copied_line_background: :default,
+                                history_line_copied_line_ok: :yellow,
+                                history_line_multiselect_background_selected: :black,
+                                history_line_multiselect_text_selected: :blue,
+                                history_line_text: :white,
+                                history_split_view_panel_background: :black,
+                                history_split_view_panel_title_text: :cyan,
+                                history_status_bar_background: :magenta,
+                                history_status_bar_text: :white,
+                                screen_navigation_app_name_background: :cyan,
+                                screen_navigation_app_name_text: :black,
+                                screen_navigation_background: :black,
+                                screen_navigation_text: :white,
+                                screen_navigation_text_selected: :cyan,
+                                search_item_matching_text: :cyan,
+                                search_item_matching_text_selected: :cyan,
+                                search_status_bar_background: :yellow,
+                                search_status_bar_text: :black
+                              }
 ```
 
 ## Roadmap & Planned Features
 
-- [ ] Black and white mode
-- [ ] High contrast mode
+### Just Finished or Impending Work
+- [x] Black and white mode
+- [x] High contrast mode
 - [ ] Help screen in the TUI
+- [ ] Delete an item from your archive
+
+### Upcoming
 - [ ] Setup CI setup with Github workflows
 - [ ] Change page of the current buffer from the TUI
 - [ ] Fix some terrible names of modules and functions (more so internally but public API could use some love)
 - [ ] User configurable keyboard bindings
 - [ ] More consistent UI making sure colors, text decorations, copy (verbiage), etc are consistent and coherent
 - [ ] Search your archive
-- [ ] Delete an item from your archive
 - [ ] Improve editing an archive entry experience (even if it's marginally so, as I'm 100% _not_ trying to pack a text editor in this bad-mama-jamma)
+
+### TBD
 - [ ] Mix tasks for using Historian without entering IEx
 - [ ] Mix tasks for: exporting, viewing, and backing up both your archive and history
 - [ ] Localization, `Gettext` is in use almost everywhere (probably not used well, but it's my first rodeo with it) except the welcome screen; unfortunately though, I only know English... contributors wanted for localization! :)

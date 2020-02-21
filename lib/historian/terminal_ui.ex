@@ -148,10 +148,6 @@ defmodule Historian.TerminalUI do
     end
   end
 
-  def update(%{screen: :search} = state, {:event, %{key: @enter}}) do
-    %{state | last_event: :select_search}
-  end
-
   def update(%{screen: :welcome} = state, msg) do
     case msg do
       {:event, %{ch: ?j}} ->
@@ -182,8 +178,34 @@ defmodule Historian.TerminalUI do
     end
   end
 
-  def update(%{screen: :search, last_event: :copied_line} = state, _msg) do
+  def update(%{screen: :search, data: %{items: items}} = state, {:event, %{key: @enter}}) when items != [] do
     %{state | last_event: :select_search}
+  end
+
+  def update(%{screen: :search, history: history, data: %{term: term}, last_event: nil} = state, message) do
+    new_term =
+      case message do
+        {:event, %{key: key}} when key in @delete_keys -> String.slice(term, 0..-2)
+        {:event, %{key: @spacebar}} -> term <> " "
+        {:event, %{ch: ch}} when ch > 0 -> term <> <<ch::utf8>>
+        _ -> term
+      end
+
+    %{state | data: SearchViewModel.new(history, new_term)}
+  end
+
+  def update(%{cursor: cursor, screen: screen, last_event: nil} = state, {:event, %{ch: char}})
+      when screen != :archive and char in [?a, ?2] do
+    show_archive(state, cursor)
+  end
+
+  def update(%{cursor: cursor, screen: :search, last_event: last_event} = state, {:event, %{ch: char}})
+      when char in [?a, ?2] and last_event != nil do
+    show_archive(state, cursor)
+  end
+
+  def update(%{screen: :search, last_event: :copied_line} = state, msg) do
+    update(%{state | last_event: :select_search}, msg)
   end
 
   def update(%{screen: :search, data: model, last_event: :select_search} = state, msg) do
@@ -199,21 +221,9 @@ defmodule Historian.TerminalUI do
     %{state | data: updated_model, last_event: event}
   end
 
-  def update(%{screen: :search, history: history, data: %{term: term}} = state, message) do
-    new_term =
-      case message do
-        {:event, %{key: key}} when key in @delete_keys -> String.slice(term, 0..-2)
-        {:event, %{key: @spacebar}} -> term <> " "
-        {:event, %{ch: ch}} when ch > 0 -> term <> <<ch::utf8>>
-        _ -> term
-      end
-
-    %{state | data: SearchViewModel.new(history, new_term)}
-  end
-
   def update(%{screen: screen, history: history} = state, {:event, %{ch: ?s}})
       when screen not in [:search, :archive] do
-    %{state | screen: :search, data: SearchViewModel.new(history, "")}
+    %{state | screen: :search, data: SearchViewModel.new(history, ""), last_event: nil}
   end
 
   def update(
@@ -232,26 +242,6 @@ defmodule Historian.TerminalUI do
       state
       | screen: :view_history,
         data: HistoryViewModel.new(items),
-        last_event: nil,
-        cursor: cursor
-    }
-  end
-
-  def update(%{cursor: cursor, screen: screen, last_event: nil} = state, {:event, %{ch: char}})
-      when screen != :archive and char in [?a, ?2] do
-    archive_data = Archive.all()
-
-    cursor =
-      if Cursor.selected?(cursor, 1) do
-        cursor
-      else
-        Cursor.down(cursor)
-      end
-
-    %{
-      state
-      | screen: :archive,
-        data: ArchiveViewModel.new(archive_data),
         last_event: nil,
         cursor: cursor
     }
@@ -312,10 +302,6 @@ defmodule Historian.TerminalUI do
 
   def update(%{screen: :view_history, data: nil, history: %{items: items}} = state, msg) do
     update(%{state | data: HistoryViewModel.new(items)}, msg)
-  end
-
-  def update(%{screen: :view_history, data: model, last_event: :copied_lines} = state, _msg) do
-    %{state | last_event: nil, data: %{model | selected_lines: []}}
   end
 
   def update(
@@ -432,7 +418,7 @@ defmodule Historian.TerminalUI do
     value = Enum.join(lines, joiner)
     _ = Clipboard.copy(value)
 
-    {:copied_lines, model}
+    {:copied_lines, %{model | selected_lines: []}}
   end
 
   defp copy_to_clipboard(%SearchViewModel{} = model, selected, [], _joiner) do
@@ -451,9 +437,28 @@ defmodule Historian.TerminalUI do
   end
 
   defp page_buffer() do
-    with {:ok, pager} <- Historian.UserInterfaceServer.get(nil),
+    with {:ok, pager} <- Historian.UserInterface.get(nil),
          {:ok, history} = PageBuffer.current(pager) do
       history
     end
+  end
+
+  defp show_archive(state, cursor) do
+    archive_data = Archive.all()
+
+    cursor =
+      if Cursor.selected?(cursor, 1) do
+        cursor
+      else
+        Cursor.down(cursor)
+      end
+
+    %{
+      state
+    | screen: :archive,
+      data: ArchiveViewModel.new(archive_data),
+      last_event: nil,
+      cursor: cursor
+    }
   end
 end

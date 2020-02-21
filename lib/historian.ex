@@ -12,7 +12,7 @@ defmodule Historian do
     Clipboard,
     History,
     PageBuffer,
-    UserInterfaceServer,
+    UserInterface,
     TerminalUI,
     TextUI
   }
@@ -330,7 +330,7 @@ defmodule Historian do
   end
 
   def tui!(pager) when is_pid(pager) do
-    with {:ok, _ref} <- UserInterfaceServer.set(pager) do
+    with {:ok, _ref} <- UserInterface.set(pager) do
       _ =
         Ratatouille.run(TerminalUI,
           quit_events: [key: Ratatouille.Constants.key(:ctrl_d)]

@@ -1,4 +1,9 @@
 defmodule Historian.TUi.Search do
+  @moduledoc """
+  This module is awful, thar be dragons and terrible nightmares lurking in here.
+
+  TODO/FIXME: Slay dragons, allow hopes and dreams again.
+  """
   alias Historian.Config
   alias Historian.TerminalUI.Cursor
 
@@ -14,45 +19,17 @@ defmodule Historian.TUi.Search do
   def render(%{
         cursor: screen_cursor,
         data: %{items: items, term: term, pattern: pattern, cursor: %{size: size} = cursor},
-        last_event: :copied_line
-      }) do
-    top_bar = menu_bar(screen_cursor, 0)
-    bottom_bar = search_status_bar(:select_search, size, gettext(@copied_line))
+        last_event: last_event
+      })
+      when last_event in [:select_search, :copied_line] do
+    status_bar_text =
+      if last_event == :select_search,
+        do: gettext(@navigating_results),
+        else: gettext(@copied_line)
+
+    status_bar_details = {:select_search, status_bar_text, size}
 
     %{id: selected} = Cursor.value_at(items, cursor)
-
-    {:ok, window_height} = Ratatouille.Window.fetch(:height)
-    viewport_offset_y = viewport_offset(0, window_height)
-
-    display_search_index = fn %{id: id} -> history_item(nil, id, id, selected) end
-
-    display_search_value = fn %{id: id, value: value} ->
-      search_item({:select_search, id, selected}, value, term, pattern)
-    end
-
-    search_view(
-      top_bar,
-      bottom_bar,
-      term,
-      items,
-      viewport_offset_y,
-      display_search_index,
-      display_search_value
-    )
-  end
-
-  def render(%{
-        cursor: screen_cursor,
-        data: %{items: items, term: term, pattern: pattern, cursor: %{size: size} = cursor},
-        last_event: :select_search
-      }) do
-    top_bar = menu_bar(screen_cursor, 0)
-    bottom_bar = search_status_bar(:select_search, size, gettext(@navigating_results))
-
-    %{id: selected} = Cursor.value_at(items, cursor)
-    {:ok, window_height} = Ratatouille.Window.fetch(:height)
-    viewport_offset_y = viewport_offset(0, window_height)
-
     display_search_index = fn %{id: id} -> history_item(:select_search, id, id, selected) end
 
     display_search_value = fn %{id: id, value: value} ->
@@ -60,11 +37,10 @@ defmodule Historian.TUi.Search do
     end
 
     search_view(
-      top_bar,
-      bottom_bar,
+      screen_cursor,
+      status_bar_details,
       term,
       items,
-      viewport_offset_y,
       display_search_index,
       display_search_value
     )
@@ -75,22 +51,17 @@ defmodule Historian.TUi.Search do
         data: %{items: items, cursor: %{size: size}, term: term, pattern: pattern},
         last_event: _
       }) do
-    top_bar = menu_bar(screen_cursor, 0)
-    bottom_bar = search_status_bar(:searching, size, gettext(@searching))
+    status_bar_details = {:searching, gettext(@searching), size}
 
-    {:ok, window_height} = Ratatouille.Window.fetch(:height)
-    viewport_offset_y = viewport_offset(0, window_height)
-
-    display_index_value = fn %{id: id} -> history_item(nil, id, id, 9_999_999) end
+    display_search_index = fn %{id: id} -> history_item(nil, id, id, 9_999_999) end
     display_search_value = fn %{value: value} -> search_item(nil, value, term, pattern) end
 
     search_view(
-      top_bar,
-      bottom_bar,
+      screen_cursor,
+      status_bar_details,
       term,
       items,
-      viewport_offset_y,
-      display_index_value,
+      display_search_index,
       display_search_value
     )
   end
@@ -99,11 +70,11 @@ defmodule Historian.TUi.Search do
     title = gettext(@search)
 
     panel_title_text_color = Config.color(:history_split_view_panel_title_text, :cyan)
-    panel_title_background_color = Config.color(:history_split_view_panel_background_text, :black)
+    panel_title_background_color = Config.color(:history_split_view_panel_background, :black)
 
     row do
       column(size: 12) do
-        panel title: title,
+        panel title: " #{title} ",
               color: panel_title_text_color,
               background: panel_title_background_color do
           label(content: " > " <> term)
@@ -134,7 +105,7 @@ defmodule Historian.TUi.Search do
 
   def search_status_bar(:searching, number_of_results, action_text, color, bg_color) do
     status_text =
-      gettext("Found") <>
+      gettext(" Found") <>
         " #{number_of_results} " <>
         ngettext("item matching query", "items matching query", number_of_results)
 
@@ -161,9 +132,11 @@ defmodule Historian.TUi.Search do
   end
 
   def search_item({:select_search, selected_id, selected_id}, content, term, _pattern) do
-    search_item_matching_text_color = Config.color(:search_item_matching_text, :cyan)
+    search_item_matching_text_color = Config.color(:search_item_matching_text_selected, :cyan)
+    selected_line_bg_color = Config.color(:history_current_line_background, :black)
+    line_text_color = Config.color(:history_current_line_text, :black)
 
-    do_search_item(content, term, [attributes: [:bold]],
+    do_search_item(content, selected_line_bg_color, term, [color: line_text_color, attributes: []],
       color: search_item_matching_text_color,
       attributes: [:bold]
     )
@@ -171,40 +144,54 @@ defmodule Historian.TUi.Search do
 
   def search_item({:select_search, _id, _selected_id}, content, term, _pattern) do
     search_item_matching_text_color = Config.color(:search_item_matching_text, :cyan)
+    line_bg_color = Config.color(:history_line_background, :default)
 
-    do_search_item(content, term, [], color: search_item_matching_text_color)
+    do_search_item(content, line_bg_color, term, [], color: search_item_matching_text_color)
   end
 
   def search_item(_event, content, term, _pattern) do
     search_item_matching_text_color = Config.color(:search_item_matching_text, :cyan)
+    line_bg_color = Config.color(:history_line_background, :default)
 
-    do_search_item(content, term, [], color: search_item_matching_text_color, attributes: [:bold])
+    do_search_item(content, line_bg_color, term, [],
+      color: search_item_matching_text_color,
+      attributes: [:bold]
+    )
   end
 
-  defp do_search_item(content, term, text_attrs, selection_attrs) do
+  defp do_search_item(content, line_bg_color, term, text_attrs, selection_attrs) do
     parts =
       to_string(content)
       |> String.split(term)
       |> Enum.map(&text_string(&1, text_attrs))
       |> Enum.intersperse(text_string(term, selection_attrs))
 
-    label do
+    padding = text_string(" ", text_attrs)
+
+    parts = [padding, parts, padding]
+
+    label(background: line_bg_color) do
       parts
     end
   end
 
   # I know...
   defp search_view(
-         top_bar,
-         bottom_bar,
+         screen_cursor,
+         {status_bar_event, status_bar_text, size},
          term,
          items,
-         vertical_offset,
          display_search_index,
          display_search_value
        ) do
     panel_title_text_color = Config.color(:history_split_view_panel_title_text, :cyan)
-    panel_title_background_color = Config.color(:history_split_view_panel_background_text, :black)
+    panel_title_background_color = Config.color(:history_split_view_panel_background, :black)
+
+    bottom_bar = search_status_bar(status_bar_event, size, status_bar_text)
+    top_bar = menu_bar(screen_cursor, 0)
+
+    {:ok, window_height} = Ratatouille.Window.fetch(:height)
+    vertical_offset = viewport_offset(0, window_height)
 
     view(top_bar: top_bar, bottom_bar: bottom_bar) do
       search_bar(term)
