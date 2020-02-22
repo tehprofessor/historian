@@ -178,11 +178,15 @@ defmodule Historian.TerminalUI do
     end
   end
 
-  def update(%{screen: :search, data: %{items: items}} = state, {:event, %{key: @enter}}) when items != [] do
+  def update(%{screen: :search, data: %{items: items}} = state, {:event, %{key: @enter}})
+      when items != [] do
     %{state | last_event: :select_search}
   end
 
-  def update(%{screen: :search, history: history, data: %{term: term}, last_event: nil} = state, message) do
+  def update(
+        %{screen: :search, history: history, data: %{term: term}, last_event: nil} = state,
+        message
+      ) do
     new_term =
       case message do
         {:event, %{key: key}} when key in @delete_keys -> String.slice(term, 0..-2)
@@ -199,13 +203,23 @@ defmodule Historian.TerminalUI do
     show_archive(state, cursor)
   end
 
-  def update(%{cursor: cursor, screen: :search, last_event: last_event} = state, {:event, %{ch: char}})
+  def update(
+        %{cursor: cursor, screen: :search, last_event: last_event} = state,
+        {:event, %{ch: char}}
+      )
       when char in [?a, ?2] and last_event != nil do
     show_archive(state, cursor)
   end
 
   def update(%{screen: :search, last_event: :copied_line} = state, msg) do
     update(%{state | last_event: :select_search}, msg)
+  end
+
+  def update(
+        %{screen: :search, cursor: cursor, history: history, last_event: :select_search} = state,
+        {:event, %{ch: ?s}}
+      ) do
+    show_view_history(state, history.items, cursor)
   end
 
   def update(%{screen: :search, data: model, last_event: :select_search} = state, msg) do
@@ -455,10 +469,20 @@ defmodule Historian.TerminalUI do
 
     %{
       state
-    | screen: :archive,
-      data: ArchiveViewModel.new(archive_data),
-      last_event: nil,
-      cursor: cursor
+      | screen: :archive,
+        data: ArchiveViewModel.new(archive_data),
+        last_event: nil,
+        cursor: cursor
+    }
+  end
+
+  defp show_view_history(state, items, cursor) do
+    %{
+      state
+      | screen: :view_history,
+        data: HistoryViewModel.new(items),
+        last_event: nil,
+        cursor: cursor
     }
   end
 end

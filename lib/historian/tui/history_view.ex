@@ -34,13 +34,27 @@ defmodule Historian.TUi.HistoryView do
 
     view(top_bar: top_bar, bottom_bar: bottom_bar) do
       row do
-        history_split_view(:ids, panel_title_text_color, panel_title_bg_color, viewport_offset_y, items, fn
-          %{id: id} -> history_item(event, id, "#{id}", selected, selected_ids)
-        end)
+        history_split_view(
+          :ids,
+          panel_title_text_color,
+          panel_title_bg_color,
+          viewport_offset_y,
+          items,
+          fn
+            %{id: id} -> history_item(event, id, "#{id}", selected, selected_ids)
+          end
+        )
 
-        history_split_view(:values, panel_title_text_color, panel_title_bg_color, viewport_offset_y, items, fn
-          %{id: id, value: value} -> history_item(event, id, value, selected, selected_ids)
-        end)
+        history_split_view(
+          :values,
+          panel_title_text_color,
+          panel_title_bg_color,
+          viewport_offset_y,
+          items,
+          fn
+            %{id: id, value: value} -> history_item(event, id, value, selected, selected_ids)
+          end
+        )
       end
     end
   end

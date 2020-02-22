@@ -44,21 +44,36 @@ defmodule Historian.TUi.Elements do
     copied_line_color = Config.color(:history_line_copied_line_ok, :yellow)
     bg_color = Config.color(:history_line_copied_line_background, :default)
 
-    label(content: " #{content} ", color: copied_line_color, background: bg_color, attributes: [:bold])
+    label(
+      content: " #{content} ",
+      color: copied_line_color,
+      background: bg_color,
+      attributes: [:bold]
+    )
   end
 
   def history_item(:select_search, selected_id, content, selected_id) do
     search_item_matching_text_color = Config.color(:search_item_matching_text_selected, :cyan)
     selected_line_bg = Config.color(:history_current_line_background, :black)
 
-    label(content: " #{content} ", color: search_item_matching_text_color, background: selected_line_bg, attributes: [:bold])
+    label(
+      content: " #{content} ",
+      color: search_item_matching_text_color,
+      background: selected_line_bg,
+      attributes: [:bold]
+    )
   end
 
   def history_item(_event, selected_id, content, selected_id) do
     selected_bg_color = Config.color(:history_current_line_background, :black)
     selected_text_color = Config.color(:history_current_line_text, :white)
 
-    label(content: " #{content} ", color: selected_text_color, background: selected_bg_color, attributes: [:bold])
+    label(
+      content: " #{content} ",
+      color: selected_text_color,
+      background: selected_bg_color,
+      attributes: [:bold]
+    )
   end
 
   def history_item(_event, _id, content, _selected) do
@@ -250,7 +265,13 @@ defmodule Historian.TUi.Elements do
 
     bar do
       label(background: :default) do
-        text(content: " #{action_text} »", color: color, background: background, attributes: [:bold])
+        text(
+          content: " #{action_text} »",
+          color: color,
+          background: background,
+          attributes: [:bold]
+        )
+
         block
         text(content: bar_padding, color: color, background: background)
       end

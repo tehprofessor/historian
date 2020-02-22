@@ -38,6 +38,7 @@ defmodule Historian.TUi.Search do
 
     search_view(
       screen_cursor,
+      cursor,
       status_bar_details,
       term,
       items,
@@ -48,7 +49,7 @@ defmodule Historian.TUi.Search do
 
   def render(%{
         cursor: screen_cursor,
-        data: %{items: items, cursor: %{size: size}, term: term, pattern: pattern},
+        data: %{items: items, cursor: %{size: size} = cursor, term: term, pattern: pattern},
         last_event: _
       }) do
     status_bar_details = {:searching, gettext(@searching), size}
@@ -58,6 +59,7 @@ defmodule Historian.TUi.Search do
 
     search_view(
       screen_cursor,
+      cursor,
       status_bar_details,
       term,
       items,
@@ -95,7 +97,8 @@ defmodule Historian.TUi.Search do
       navigation_option(gettext("move down"), "j", color, bg_color),
       navigation_option(gettext("move up"), "k", color, bg_color),
       navigation_option(gettext("copy line"), "y", color, bg_color),
-      navigation_option(gettext("edit search"), "e", color, bg_color)
+      navigation_option(gettext("edit search term"), "e", color, bg_color),
+      navigation_option(gettext("exit search (view history)"), "s", color, bg_color)
     ]
 
     status_bar(action_text, color, bg_color) do
@@ -136,7 +139,11 @@ defmodule Historian.TUi.Search do
     selected_line_bg_color = Config.color(:history_current_line_background, :black)
     line_text_color = Config.color(:history_current_line_text, :black)
 
-    do_search_item(content, selected_line_bg_color, term, [color: line_text_color, attributes: []],
+    do_search_item(
+      content,
+      selected_line_bg_color,
+      term,
+      [color: line_text_color, attributes: []],
       color: search_item_matching_text_color,
       attributes: [:bold]
     )
@@ -175,9 +182,10 @@ defmodule Historian.TUi.Search do
     end
   end
 
-  # I know...
+  # I know...this is awful.
   defp search_view(
          screen_cursor,
+         cursor,
          {status_bar_event, status_bar_text, size},
          term,
          items,
@@ -191,7 +199,7 @@ defmodule Historian.TUi.Search do
     top_bar = menu_bar(screen_cursor, 0)
 
     {:ok, window_height} = Ratatouille.Window.fetch(:height)
-    vertical_offset = viewport_offset(0, window_height)
+    vertical_offset = viewport_offset(cursor, window_height)
 
     view(top_bar: top_bar, bottom_bar: bottom_bar) do
       search_bar(term)

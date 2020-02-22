@@ -42,8 +42,8 @@ defmodule Historian.Styles do
   }
 
   @black_and_white_dark %{
-    archive_item_current_line_background: :black,
-    archive_item_current_line_text: :white,
+    archive_item_current_line_background: :white,
+    archive_item_current_line_text: :black,
     archive_panel_background: :black,
     archive_panel_title_text: :white,
     archive_status_bar_background: :white,
@@ -58,8 +58,8 @@ defmodule Historian.Styles do
     dialog_box_label_text: :white,
     dialog_box_label_text_selected: :black,
     dialog_box_panel_text: :black,
-    history_current_line_background: :black,
-    history_current_line_text: :white,
+    history_current_line_background: :white,
+    history_current_line_text: :black,
     history_line_background: :default,
     history_line_text: :white,
     history_line_copied_line_ok: :black,
@@ -76,7 +76,7 @@ defmodule Historian.Styles do
     screen_navigation_text: :white,
     screen_navigation_text_selected: :white,
     search_item_matching_text: :white,
-    search_item_matching_text_selected: :white,
+    search_item_matching_text_selected: :black,
     search_status_bar_background: :white,
     search_status_bar_text: :black
   }
@@ -201,7 +201,8 @@ defmodule Historian.Styles do
   }
 
   @typedoc "Possible color scheme names"
-  @type color_schemes :: :black_and_white_dark | :black_and_white_light | :hight_contrast_dark | :default
+  @type color_schemes ::
+          :black_and_white_dark | :black_and_white_light | :hight_contrast_dark | :default
 
   @spec color_scheme(scheme_name :: color_schemes | nil) :: map()
   def color_scheme(name) do

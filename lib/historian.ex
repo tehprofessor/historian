@@ -96,6 +96,14 @@ defmodule Historian do
   end
 
   @doc """
+  Permanently delete an archive entry by name.
+  """
+  @spec delete_entry(archive_entry_name :: atom()) :: :ok
+  def delete_entry(entry_name) do
+    Archive.delete_value(entry_name)
+  end
+
+  @doc """
   Evaluate the entry and return the result; uses `Code.eval_string/1` to obtain the result.
 
   ## Parameters

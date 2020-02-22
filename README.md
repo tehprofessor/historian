@@ -434,17 +434,29 @@ config :historian, :colors, %{
 
 ## Roadmap & Planned Features
 
-### Just Finished or Impending Work
-- [x] Black and white mode
-- [x] High contrast mode
-- [ ] Help screen in the TUI
-- [ ] Delete an item from your archive
+### Beta 3 (in progress)
 
-### Upcoming
-- [ ] Setup CI setup with Github workflows
-- [ ] Change page of the current buffer from the TUI
+#### Fixes
+
+- [x] TUI: Support for light-background terminals with `config :historian, :color_scheme, :black_and_white_light`
+- [x] TUI: Screen navigation working after search
+- [x] TUI: Fixed crash when attempting to navigate no matching search results
+- [x] TUI: Search results now scroll properly
+
+#### Features
+
+- [x] TUI: Black and white mode for light and dark terminals
+- [x] TUI: High contrast mode for light and dark terminals
+- [x] TUI: Hide the search (and view history) by pressing `s` while navigating results
+- [x] Basic CI using Travis (I need to setup a matrix to test copy/paste on different OSes, finalize how I want to test for visual regressions, and support other elixir/otp versions).
+- [x] Delete an item from your archive by name with `Historian.delete_entry/1`
+
+### Beta 4
+
 - [ ] Fix some terrible names of modules and functions (more so internally but public API could use some love)
 - [ ] User configurable keyboard bindings
+- [ ] Help screen in the TUI
+- [ ] Change page of the buffer from the TUI
 - [ ] More consistent UI making sure colors, text decorations, copy (verbiage), etc are consistent and coherent
 - [ ] Search your archive
 - [ ] Improve editing an archive entry experience (even if it's marginally so, as I'm 100% _not_ trying to pack a text editor in this bad-mama-jamma)
@@ -454,6 +466,8 @@ config :historian, :colors, %{
 - [ ] Mix tasks for: exporting, viewing, and backing up both your archive and history
 - [ ] Localization, `Gettext` is in use almost everywhere (probably not used well, but it's my first rodeo with it) except the welcome screen; unfortunately though, I only know English... contributors wanted for localization! :)
 - [ ] Make the `Welcome` TUI screen use `Gettext`
+- [ ] OS specific CI coverage of copy/paste
+- [ ] TUI regression testing
 
 ## Acknowledgements
 

@@ -1,7 +1,7 @@
 defmodule Historian.MixProject do
   use Mix.Project
 
-  @version "0.11.0-beta.2"
+  @version "0.11.0-beta.3"
 
   def project do
     [
@@ -14,8 +14,9 @@ defmodule Historian.MixProject do
       description: description(),
       deps: deps(),
       dialyzer: [
+        ignore_warnings: ".dialyzer_ignore.exs",
         plt_add_deps: :transitive,
-        ignore_warnings: ".dialyzer_ignore.exs"
+        plt_file: {:no_warn, "priv/plts/dialyzer.plt"}
       ],
       package: package(),
       docs: [

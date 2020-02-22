@@ -1,0 +1,16 @@
+language: elixir
+elixir: '1.10'
+opt_release:
+  - '22.2'
+
+install: mix local.rebar --force; mix local.hex --force; mix deps.get
+
+script:
+  - mix compile --warnings-as-errors
+  - mix format --check-formatted
+  - mix test
+  - mix dialyzer
+
+cache:
+  directories:
+    - priv/plts
