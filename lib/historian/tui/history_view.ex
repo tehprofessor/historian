@@ -1,4 +1,5 @@
 defmodule Historian.TUi.HistoryView do
+  alias Historian.Config
   alias Historian.TerminalUI.Cursor
 
   import Historian.Gettext
@@ -6,9 +7,6 @@ defmodule Historian.TUi.HistoryView do
   import Ratatouille.View
 
   require Logger
-
-  @status_bar_color :white
-  @status_bar_bg :magenta
 
   @txt_buffer_size "buffer size:"
   @txt_copied_line "COPIED LINE!"
@@ -31,15 +29,32 @@ defmodule Historian.TUi.HistoryView do
     bottom_bar = history_status_bar(event, max_length)
     viewport_offset_y = viewport_offset(cursor, window_height)
 
+    panel_title_text_color = Config.color(:history_split_view_panel_title_text, :cyan)
+    panel_title_bg_color = Config.color(:history_split_view_panel_background, :black)
+
     view(top_bar: top_bar, bottom_bar: bottom_bar) do
       row do
-        history_split_view(:ids, :cyan, :black, viewport_offset_y, items, fn
-          %{id: id} -> history_item(event, id, id, selected, selected_ids)
-        end)
+        history_split_view(
+          :ids,
+          panel_title_text_color,
+          panel_title_bg_color,
+          viewport_offset_y,
+          items,
+          fn
+            %{id: id} -> history_item(event, id, "#{id}", selected, selected_ids)
+          end
+        )
 
-        history_split_view(:values, :cyan, :black, viewport_offset_y, items, fn
-          %{id: id, value: value} -> history_item(event, id, value, selected, selected_ids)
-        end)
+        history_split_view(
+          :values,
+          panel_title_text_color,
+          panel_title_bg_color,
+          viewport_offset_y,
+          items,
+          fn
+            %{id: id, value: value} -> history_item(event, id, value, selected, selected_ids)
+          end
+        )
       end
     end
   end
@@ -62,15 +77,18 @@ defmodule Historian.TUi.HistoryView do
   end
 
   defp do_history_status_bar(action_text, status_text) do
-    navigation_items = history_view_navigation_items(@status_bar_color, @status_bar_bg)
+    bar_background_color = Config.color(:history_status_bar_background, :magenta)
+    bar_text_color = Config.color(:history_status_bar_text, :white)
+
+    navigation_items = history_view_navigation_items(bar_text_color, bar_background_color)
 
     status_bar_items =
-      case maybe_history_status_text(status_text, @status_bar_color, @status_bar_bg) do
+      case maybe_history_status_text(status_text, bar_text_color, bar_background_color) do
         nil -> navigation_items
         text_item -> [text_item | navigation_items]
       end
 
-    status_bar(action_text, @status_bar_color, @status_bar_bg) do
+    status_bar(action_text, bar_text_color, bar_background_color) do
       status_bar_items
     end
   end

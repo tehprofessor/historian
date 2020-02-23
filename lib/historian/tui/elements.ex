@@ -10,7 +10,7 @@ defmodule Historian.TUi.Elements do
 
   def column_panel(size, title, color, bg, offset_y, items, display_item_fn) do
     column(size: size) do
-      panel title: title, height: :fill, color: color, background: bg do
+      panel title: " #{title} ", height: :fill, color: color, background: bg do
         viewport(offset_y: offset_y) do
           Enum.map(items, display_item_fn)
         end
@@ -24,31 +24,63 @@ defmodule Historian.TUi.Elements do
 
   def history_item(event, line_id, content, current_selection_id, selected_ids)
       when is_list(selected_ids) do
-    history_item_selected_color = Config.color(:history_line_multiselect_text_selected, :blue)
+    text_color = Config.color(:history_line_multiselect_text_selected, :blue)
+    bg_color = Config.color(:history_line_multiselect_background_selected, :black)
 
     if Enum.member?(selected_ids, line_id) do
-      label(content: "#{content}", color: history_item_selected_color, attributes: [:bold])
+      label(content: " #{content} ", color: text_color, background: bg_color, attributes: [:bold])
     else
       history_item(event, line_id, content, current_selection_id)
     end
   end
 
+  def history_item(:copied_lines, selected_id, content, selected_id) do
+    copied_line_color = Config.color(:history_line_text, :white)
+
+    label(content: " #{content} ", color: copied_line_color, attributes: [:bold])
+  end
+
   def history_item(:copied_line, selected_id, content, selected_id) do
     copied_line_color = Config.color(:history_line_copied_line_ok, :yellow)
-    label(content: "#{content}", color: copied_line_color, attributes: [:bold])
+    bg_color = Config.color(:history_line_copied_line_background, :default)
+
+    label(
+      content: " #{content} ",
+      color: copied_line_color,
+      background: bg_color,
+      attributes: [:bold]
+    )
   end
 
   def history_item(:select_search, selected_id, content, selected_id) do
-    search_item_matching_text_color = Config.color(:search_item_matching_text, :cyan)
-    label(content: "#{content}", color: search_item_matching_text_color, attributes: [:bold])
+    search_item_matching_text_color = Config.color(:search_item_matching_text_selected, :cyan)
+    selected_line_bg = Config.color(:history_current_line_background, :black)
+
+    label(
+      content: " #{content} ",
+      color: search_item_matching_text_color,
+      background: selected_line_bg,
+      attributes: [:bold]
+    )
   end
 
   def history_item(_event, selected_id, content, selected_id) do
-    label(content: "#{content}", attributes: [:bold])
+    selected_bg_color = Config.color(:history_current_line_background, :black)
+    selected_text_color = Config.color(:history_current_line_text, :white)
+
+    label(
+      content: " #{content} ",
+      color: selected_text_color,
+      background: selected_bg_color,
+      attributes: [:bold]
+    )
   end
 
   def history_item(_event, _id, content, _selected) do
-    label(content: "#{content}", attributes: [])
+    text_color = Config.color(:history_line_text, :white)
+    bg_color = Config.color(:history_line_background, :default)
+
+    label(content: " #{content} ", color: text_color, background: bg_color, attributes: [])
   end
 
   def history_split_view(:ids, color, bg, offset_y, items, display_item_fn) do
@@ -225,7 +257,7 @@ defmodule Historian.TUi.Elements do
     ]
   end
 
-  def status_bar(action_text, color \\ :black, background \\ :magenta, do: block) do
+  def status_bar(action_text, color, background, do: block) do
     {:ok, window_width} = Ratatouille.Window.fetch(:width)
     # This is too much padding, but I honestly can't tell if makes any difference.
     magic_number = String.length(action_text)
@@ -233,7 +265,13 @@ defmodule Historian.TUi.Elements do
 
     bar do
       label(background: :default) do
-        text(content: "#{action_text} »", color: color, background: background)
+        text(
+          content: " #{action_text} »",
+          color: color,
+          background: background,
+          attributes: [:bold]
+        )
+
         block
         text(content: bar_padding, color: color, background: background)
       end

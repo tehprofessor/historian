@@ -12,7 +12,7 @@ defmodule Historian do
     Clipboard,
     History,
     PageBuffer,
-    UserInterfaceServer,
+    UserInterface,
     TerminalUI,
     TextUI
   }
@@ -20,16 +20,21 @@ defmodule Historian do
   import Historian.Gettext
 
   @doc """
-  Create an archive entry with the given name and value.
+  Create an archive entry with the given name and value. The value MUST be a string as this function is not a macro :)
 
   ## Parameters
 
-    - entry_name: Name of the new entry
-    - entry_value: Value (i.e. content) of the new entry
+    - entry_name: Name of the new entry.
+    - entry_value: Value (i.e. content) of the new entry as a string.
   """
-  @spec archive_entry!(atom(), String.t()) :: String.t()
-  def archive_entry!(entry_name, entry_value) do
+  @spec archive_entry!(entry_name :: atom(), entry_value :: String.t()) ::
+          String.t() | {:error, :non_string_value}
+  def archive_entry!(entry_name, entry_value) when is_binary(entry_value) do
     Archive.insert_value(entry_name, entry_value)
+  end
+
+  def archive_entry!(_entry_name, _entry_value) do
+    {:error, :non_string_value}
   end
 
   @doc """
@@ -93,6 +98,14 @@ defmodule Historian do
     lines = TextUI.archive_item(item, nil, false, false)
 
     Clipboard.copy(lines)
+  end
+
+  @doc """
+  Permanently delete an archive entry by name.
+  """
+  @spec delete_entry(archive_entry_name :: atom()) :: :ok
+  def delete_entry(entry_name) do
+    Archive.delete_value(entry_name)
   end
 
   @doc """
@@ -323,19 +336,31 @@ defmodule Historian do
     tui!(pager)
   end
 
-  def tui!(pager \\ nil)
+  def tui!(pager \\ nil, screen \\ :view_history)
 
-  def tui!(nil) do
-    current_pager() |> tui!()
+  def tui!(nil, screen) do
+    current_pager() |> tui!(screen)
   end
 
-  def tui!(pager) when is_pid(pager) do
-    with {:ok, _ref} <- UserInterfaceServer.set(pager) do
+  def tui!(pager, screen) when is_pid(pager) do
+    with {:ok, _ref} <- UserInterface.set(pager),
+         {:ok, _session_ref} <- UserInterface.prepare_session(screen) do
       _ =
         Ratatouille.run(TerminalUI,
           quit_events: [key: Ratatouille.Constants.key(:ctrl_d)]
         )
     end
+  end
+
+  @doc """
+  Opens your archive in an interactive Historian session.
+  """
+  @spec view_archive() :: :ok
+  def view_archive() do
+    pager = current_pager()
+    _ = PageBuffer.set_page(pager, 0)
+
+    tui!(pager, :archive)
   end
 
   @doc """

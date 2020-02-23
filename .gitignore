@@ -24,3 +24,7 @@ historian-*.tar
 
 # Historian Archives
 *.ets
+
+# Dialyzer artifacts
+/priv/plts/*.plt
+/priv/plts/*.plt.hash

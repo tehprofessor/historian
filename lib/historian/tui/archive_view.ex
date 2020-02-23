@@ -1,13 +1,11 @@
 defmodule Historian.TUi.ArchiveView do
+  alias Historian.Config
   alias Historian.TerminalUI.Cursor
   alias Historian.TUi.ArchiveItemForm
 
   import Historian.Gettext
   import Historian.TUi.Elements
   import Ratatouille.View
-
-  @status_bar_color :black
-  @status_bar_bg :green
 
   @txt_archive_col_name "Name"
   @txt_archive_col_value "Value"
@@ -31,98 +29,64 @@ defmodule Historian.TUi.ArchiveView do
   def render(%{
         cursor: screen_cursor,
         data: %{items: [], cursor: cursor} = _model,
-        last_event: event
+        last_event: last_event
       }) do
-    {event, event_msg} = do_event(event)
-    max_length = cursor.size
-
-    {:ok, window_height} = Ratatouille.Window.fetch(:height)
-
-    top_bar = menu_bar(screen_cursor, 1)
-
-    bottom_bar =
-      case event do
-        :updated_entry ->
-          update_text = gettext(@txt_successfully_updated) <> " #{inspect(event_msg)}"
-          archive_status_bar(event, update_text)
-
-        :new_entry ->
-          archive_status_bar(event, editing_status_text(event, event_msg.element_cursor))
-
-        :editing_entry ->
-          archive_status_bar(event, editing_status_text(event, event_msg.element_cursor))
-
-        _ ->
-          archive_status_bar(event, max_length)
-      end
-
-    viewport_offset_y = viewport_offset(cursor, window_height)
-
-    view(top_bar: top_bar, bottom_bar: bottom_bar) do
-      row do
-        archive_column(:ids, :cyan, :black, viewport_offset_y, [%{items: "", name: ""}], fn
-          %{name: name} -> archive_item(event, name, name, "")
-        end)
-
-        archive_column(:values, :cyan, :black, viewport_offset_y, [%{items: "", name: ""}], fn
-          %{name: name, items: items} when is_list(items) ->
-            value = Enum.join(items)
-            archive_item(event, name, value, "")
-
-          %{name: name, items: value} ->
-            archive_item(event, name, value, "")
-        end)
-      end
-
-      ArchiveItemForm.maybe_render(%{model: event_msg, last_event: event})
-    end
+    # Empty Archive
+    archive_view(screen_cursor, cursor, [%{items: "", name: ""}], last_event, "")
   end
 
   def render(%{
         cursor: screen_cursor,
-        data: %{items: items, cursor: cursor} = _model,
-        last_event: event
+        data: %{items: archive_items, cursor: cursor} = _model,
+        last_event: last_event
       }) do
-    {event, event_msg} = do_event(event)
-    %{name: selected} = Cursor.value_at(items, cursor)
-    max_length = cursor.size
+    %{name: selected} = Cursor.value_at(archive_items, cursor)
+    # Archive with items
+    archive_view(screen_cursor, cursor, archive_items, last_event, selected)
+  end
 
+  defp archive_view(screen_cursor, cursor, items, last_event, selected) do
+    {event, event_msg} = do_event(last_event)
+    max_length = cursor.size
     {:ok, window_height} = Ratatouille.Window.fetch(:height)
 
     top_bar = menu_bar(screen_cursor, 1)
-
-    bottom_bar =
-      case event do
-        :updated_entry ->
-          update_text = gettext(@txt_successfully_updated) <> " #{inspect(event_msg)}"
-          archive_status_bar(event, update_text)
-
-        :new_entry ->
-          archive_status_bar(event, editing_status_text(event, event_msg.element_cursor))
-
-        :editing_entry ->
-          archive_status_bar(event, editing_status_text(event, event_msg.element_cursor))
-
-        _ ->
-          archive_status_bar(event, max_length)
-      end
-
+    bottom_bar = setup_bottom_bar(event, event_msg, max_length)
     viewport_offset_y = viewport_offset(cursor, window_height)
+
+    display_index = fn %{name: name} -> archive_item(event, name, name, selected) end
+
+    display_value = fn
+      %{name: name, items: items} when is_list(items) ->
+        value = Enum.join(items)
+        archive_item(event, name, value, selected)
+
+      %{name: name, items: value} ->
+        archive_item(event, name, value, selected)
+    end
+
+    panel_title_text_color = Config.color(:archive_panel_title_text, :cyan)
+    panel_title_background_color = Config.color(:archive_panel_background, :black)
 
     view(top_bar: top_bar, bottom_bar: bottom_bar) do
       row do
-        archive_column(:ids, :cyan, :black, viewport_offset_y, items, fn
-          %{name: name} -> archive_item(event, name, name, selected)
-        end)
+        archive_column(
+          :ids,
+          panel_title_text_color,
+          panel_title_background_color,
+          viewport_offset_y,
+          items,
+          display_index
+        )
 
-        archive_column(:values, :cyan, :black, viewport_offset_y, items, fn
-          %{name: name, items: items} when is_list(items) ->
-            value = Enum.join(items)
-            archive_item(event, name, value, selected)
-
-          %{name: name, items: value} ->
-            archive_item(event, name, value, selected)
-        end)
+        archive_column(
+          :values,
+          panel_title_text_color,
+          panel_title_background_color,
+          viewport_offset_y,
+          items,
+          display_value
+        )
       end
 
       ArchiveItemForm.maybe_render(%{model: event_msg, last_event: event})
@@ -130,11 +94,14 @@ defmodule Historian.TUi.ArchiveView do
   end
 
   defp archive_item(_event, selected_name, value, selected_name) do
-    label(content: "#{value}", attributes: [:bold])
+    text_color = Config.color(:archive_item_current_line_text, :white)
+    bg_color = Config.color(:archive_item_current_line_background, :black)
+
+    label(content: " #{value} ", color: text_color, background: bg_color, attributes: [:bold])
   end
 
   defp archive_item(_event, _name, value, _selected) do
-    label(content: "#{value}", attributes: [])
+    label(content: " #{value} ", attributes: [])
   end
 
   defp archive_column(:ids, color, bg, offset_y, items, display_item_fn) do
@@ -143,6 +110,23 @@ defmodule Historian.TUi.ArchiveView do
 
   defp archive_column(:values, color, bg, offset_y, items, display_item_fn) do
     column_panel(10, gettext(@txt_archive_col_value), color, bg, offset_y, items, display_item_fn)
+  end
+
+  defp setup_bottom_bar(event, event_msg, max_length) do
+    case event do
+      :updated_entry ->
+        update_text = gettext(@txt_successfully_updated) <> " #{inspect(event_msg)}"
+        archive_status_bar(event, update_text)
+
+      :new_entry ->
+        archive_status_bar(event, editing_status_text(event, event_msg.element_cursor))
+
+      :editing_entry ->
+        archive_status_bar(event, editing_status_text(event, event_msg.element_cursor))
+
+      _ ->
+        archive_status_bar(event, max_length)
+    end
   end
 
   defp archive_status_bar(:updated_entry, status_message) do
@@ -188,15 +172,17 @@ defmodule Historian.TUi.ArchiveView do
   end
 
   defp do_archive_status_bar(event, action_text, status_text) do
-    navigation_items = navigation_items(event, @status_bar_color, @status_bar_bg)
+    bg_color = Config.color(:archive_status_bar_background, :green)
+    text_color = Config.color(:archive_status_bar_text, :black)
+    navigation_items = navigation_items(event, text_color, bg_color)
 
     status_bar_items =
-      case maybe_archive_status_text(status_text, @status_bar_color, @status_bar_bg) do
+      case maybe_archive_status_text(status_text, text_color, bg_color) do
         nil -> navigation_items
         text_item -> [text_item | navigation_items]
       end
 
-    status_bar(action_text, @status_bar_color, @status_bar_bg) do
+    status_bar(action_text, text_color, bg_color) do
       status_bar_items
     end
   end
