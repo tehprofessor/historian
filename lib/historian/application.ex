@@ -19,7 +19,7 @@ defmodule Historian.Application do
   defp ui_server_spec() do
     %{
       id: Historian.UserInterface,
-      start: {Historian.UserInterface, :start_link, []}
+      start: {Historian.UserInterface, :start_link, [[name: Historian.UserInterface]]}
     }
   end
 

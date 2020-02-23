@@ -34,6 +34,7 @@ defmodule Historian.Clipboard do
   end
 
   defp do_copy(:linux, value) when is_binary(value) do
+    # Check to see if there's an X-server running otherwise copy/pasta won't work.
     if System.get_env("DISPLAY") do
       port = Port.open({:spawn, "xclip -sel clip"}, [:binary])
       _ = send(port, {self(), {:command, value}})

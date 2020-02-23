@@ -136,7 +136,7 @@ defmodule Historian.TUi.ModalView do
   end
 
   def highlight_element(true, text, color) do
-    highlighted_bg_color = Config.color(:dialog_box_label_background_selected, :yellow)
+    highlighted_bg_color = Config.color(:dialog_box_button_background_selected, :yellow)
 
     # TODO: Make less bad
     {bg_color, text_color} =
@@ -158,7 +158,7 @@ defmodule Historian.TUi.ModalView do
   end
 
   def highlight_element(_falsy, text, color) do
-    bg_color = Config.color(:dialog_box_label_background, :yellow)
+    bg_color = Config.color(:dialog_box_button_background, :white)
     label(content: " #{text} ", color: color, background: bg_color, attributes: [])
   end
 

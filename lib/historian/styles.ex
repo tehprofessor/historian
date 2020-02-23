@@ -8,6 +8,8 @@ defmodule Historian.Styles do
     archive_panel_title_text: :black,
     archive_status_bar_background: :black,
     archive_status_bar_text: :white,
+    dialog_box_button_background: :white,
+    dialog_box_button_background_selected: :black,
     dialog_box_panel_background: :black,
     dialog_box_cancel_text: :black,
     dialog_box_confirm_text: :black,
@@ -48,6 +50,8 @@ defmodule Historian.Styles do
     archive_panel_title_text: :white,
     archive_status_bar_background: :white,
     archive_status_bar_text: :black,
+    dialog_box_button_background: :black,
+    dialog_box_button_background_selected: :white,
     dialog_box_panel_background: :white,
     dialog_box_cancel_text: :white,
     dialog_box_confirm_text: :white,
@@ -88,6 +92,8 @@ defmodule Historian.Styles do
     archive_panel_title_text: :black,
     archive_status_bar_background: :blue,
     archive_status_bar_text: :black,
+    dialog_box_button_background: :blue,
+    dialog_box_button_background_selected: :magenta,
     dialog_box_panel_background: :blue,
     dialog_box_cancel_text: :black,
     dialog_box_confirm_text: :black,
@@ -127,6 +133,8 @@ defmodule Historian.Styles do
     archive_panel_title_text: :white,
     archive_status_bar_background: :blue,
     archive_status_bar_text: :white,
+    dialog_box_button_background: :blue,
+    dialog_box_button_background_selected: :magenta,
     dialog_box_cancel_text: :white,
     dialog_box_confirm_text: :white,
     dialog_box_content_text: :white,
@@ -167,8 +175,10 @@ defmodule Historian.Styles do
     archive_panel_title_text: :cyan,
     archive_status_bar_background: :green,
     archive_status_bar_text: :black,
+    dialog_box_button_background: :white,
+    dialog_box_button_background_selected: :yellow,
     dialog_box_cancel_text: :red,
-    dialog_box_confirm_text: :blue,
+    dialog_box_confirm_text: :green,
     dialog_box_content_text: :yellow,
     dialog_box_label_background: :white,
     dialog_box_label_background_selected: :yellow,
@@ -202,7 +212,11 @@ defmodule Historian.Styles do
 
   @typedoc "Possible color scheme names"
   @type color_schemes ::
-          :black_and_white_dark | :black_and_white_light | :hight_contrast_dark | :default
+          :black_and_white_dark
+          | :black_and_white_light
+          | :hight_contrast_dark
+          | :high_contrast_light
+          | :default
 
   @spec color_scheme(scheme_name :: color_schemes | nil) :: map()
   def color_scheme(name) do

@@ -1,7 +1,7 @@
 defmodule Historian.TerminalUI do
   @behaviour Ratatouille.App
 
-  alias Historian.{Archive, Clipboard, History, PageBuffer, TUi}
+  alias Historian.{Archive, Clipboard, History, PageBuffer, TUi, UserInterface}
 
   import Ratatouille.Constants, only: [key: 1]
 
@@ -125,17 +125,26 @@ defmodule Historian.TerminalUI do
   end
 
   def init(_) do
+    # This is in need of some cleanup..
     if Historian.Archive.configured?() do
       history = page_buffer()
+
       view_data = HistoryViewModel.new(history.items)
       screen_nav_cursor = Cursor.new(:screen_nav, 2)
 
-      %__MODULE__{
+      default_state = %__MODULE__{
         history: history,
         cursor: screen_nav_cursor,
         screen: :view_history,
         data: view_data
       }
+
+      {:ok, session_ref} = UserInterface.current_session()
+
+      case UserInterface.session_info(session_ref) do
+        {:ok, %{initial_screen: :archive}} -> show_archive(default_state, screen_nav_cursor)
+        _ -> default_state
+      end
     else
       {:ok, window_height} = Ratatouille.Window.fetch(:height)
 

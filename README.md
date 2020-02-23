@@ -236,6 +236,8 @@ a `PageBuffer` process will open the UI to the buffer's current page.
 ```elixir
 iex> pager = Historian.pages(100)
 iex> Historian.tui!(pager)
+# An alias for tui! is view_history
+iex> Historian.view_history()
 ```
 
 As you read through the TUI features list, you'll notice next to the header for that entry there are braces containing a character(s); that's the key to press for that section. There may be more options within each sections details, but I've put them there to make skimming this faster.
@@ -279,6 +281,12 @@ search.
 #### Viewing Your Archive `[2]`
 
 To view all archived materials using interactive mode, press `2` at anytime (except when searching, will be improved in a future release). You can navigate, select, and copy entries using the same `j`, `k`, and `y` commands as when viewing the history.
+
+To open the Historian TUI directly to your archive from IEx:
+
+```elixir
+iex> Historian.view_archive()
+```
 
 **note:** To return to the history screen, press `1`
 
@@ -327,6 +335,8 @@ def deps do
   ]
 end
 ```
+
+To see the most current version available in Hex use: `mix hex.info historian`
 
 ### Automatic Setup
 
@@ -434,7 +444,9 @@ config :historian, :colors, %{
 
 ## Roadmap & Planned Features
 
-### Beta 3 (in progress)
+Below is the roadmap to release, starting from the first public release (`beta-2`). You may notice testing and documentation listed under "features" that's because I view them as features.
+
+### Beta 3 (completed Feb. 22, 2020)
 
 #### Fixes
 
@@ -448,26 +460,41 @@ config :historian, :colors, %{
 - [x] TUI: Black and white mode for light and dark terminals
 - [x] TUI: High contrast mode for light and dark terminals
 - [x] TUI: Hide the search (and view history) by pressing `s` while navigating results
-- [x] Basic CI using Travis (I need to setup a matrix to test copy/paste on different OSes, finalize how I want to test for visual regressions, and support other elixir/otp versions).
 - [x] Delete an item from your archive by name with `Historian.delete_entry/1`
+- [x] Open the TUI directly to your archive `Historian.view_archive/0`
+- [x] Basic CI using Travis (I need to setup a matrix to test copy/paste on different OSes, finalize how I want to test for visual regressions, and support other elixir/otp versions)
 
 ### Beta 4
 
-- [ ] Fix some terrible names of modules and functions (more so internally but public API could use some love)
+
+#### Fixes
+
+- [ ] Improve terrible names of modules and functions (more so internally but public API could use some love)
+
+#### Features
+
+- [ ] Complete documentation in `@moduledoc` so using `h Historian` in IEx is useful
 - [ ] User configurable keyboard bindings
-- [ ] Help screen in the TUI
+- [ ] TUI: Help screen
 - [ ] Change page of the buffer from the TUI
 - [ ] More consistent UI making sure colors, text decorations, copy (verbiage), etc are consistent and coherent
+
+### Beta 5
+
 - [ ] Search your archive
+- [ ] Make the `Welcome` TUI screen use `Gettext`
+- [ ] OS specific CI coverage of copy/paste
 - [ ] Improve editing an archive entry experience (even if it's marginally so, as I'm 100% _not_ trying to pack a text editor in this bad-mama-jamma)
 
 ### TBD
+
+The following may not make it to the first official non-beta release, and may be included in future versions:
+
 - [ ] Mix tasks for using Historian without entering IEx
 - [ ] Mix tasks for: exporting, viewing, and backing up both your archive and history
 - [ ] Localization, `Gettext` is in use almost everywhere (probably not used well, but it's my first rodeo with it) except the welcome screen; unfortunately though, I only know English... contributors wanted for localization! :)
-- [ ] Make the `Welcome` TUI screen use `Gettext`
-- [ ] OS specific CI coverage of copy/paste
 - [ ] TUI regression testing
+- [ ] History and archive statistics
 
 ## Acknowledgements
 

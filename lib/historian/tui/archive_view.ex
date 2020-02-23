@@ -97,11 +97,11 @@ defmodule Historian.TUi.ArchiveView do
     text_color = Config.color(:archive_item_current_line_text, :white)
     bg_color = Config.color(:archive_item_current_line_background, :black)
 
-    label(content: "#{value}", color: text_color, background: bg_color, attributes: [:bold])
+    label(content: " #{value} ", color: text_color, background: bg_color, attributes: [:bold])
   end
 
   defp archive_item(_event, _name, value, _selected) do
-    label(content: "#{value}", attributes: [])
+    label(content: " #{value} ", attributes: [])
   end
 
   defp archive_column(:ids, color, bg, offset_y, items, display_item_fn) do
